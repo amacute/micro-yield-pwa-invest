@@ -61,7 +61,7 @@ const mockInvestments: Investment[] = [
     title: 'Urban Development Project',
     description: 'Fund a new urban development project in downtown area with expected high returns.',
     amount: 0, // to be filled by investor
-    minInvestment: 50,
+    minInvestment: 10, // Updated to 10 dollars
     maxInvestment: 5000,
     returnRate: 15, // 15% return
     duration: 72, // 72 hours
@@ -79,7 +79,7 @@ const mockInvestments: Investment[] = [
     title: 'Tech Startup Funding',
     description: 'Support an emerging tech startup with innovative AI solutions for healthcare.',
     amount: 0,
-    minInvestment: 100,
+    minInvestment: 10, // Updated to 10 dollars
     maxInvestment: 10000,
     returnRate: 20,
     duration: 72,
@@ -97,7 +97,7 @@ const mockInvestments: Investment[] = [
     title: 'Cryptocurrency Mining Pool',
     description: 'Join a cryptocurrency mining pool with steady returns and distributed risk.',
     amount: 0,
-    minInvestment: 10,
+    minInvestment: 10, // Updated to 10 dollars
     maxInvestment: 2000,
     returnRate: 10,
     duration: 72,
@@ -115,7 +115,7 @@ const mockInvestments: Investment[] = [
     title: 'P2P Loan Bundle',
     description: 'Diversified bundle of peer-to-peer loans across multiple industries.',
     amount: 0,
-    minInvestment: 25,
+    minInvestment: 10, // Updated to 10 dollars
     maxInvestment: 3000,
     returnRate: 12,
     duration: 72,

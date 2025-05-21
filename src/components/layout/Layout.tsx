@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Header } from './Header';
 import { Navbar } from './Navbar';
 import { Loader } from '@/components/common/Loader';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 
 interface LayoutProps {
   children: ReactNode;
@@ -53,6 +54,9 @@ export function Layout({ children, requireAuth = false }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-axiom-light dark:bg-axiom-dark">
       <Header />
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       <main className="flex-1 container mx-auto px-4 py-6 md:px-6">
         {children}
       </main>
@@ -61,6 +65,12 @@ export function Layout({ children, requireAuth = false }: LayoutProps) {
           <Navbar />
         </footer>
       )}
+      <div className="py-2 text-center text-xs text-muted-foreground border-t">
+        <div className="container mx-auto flex justify-center space-x-4">
+          <a href="/terms-and-conditions" className="hover:underline">Terms and Conditions</a>
+          <a href="/privacy-policy" className="hover:underline">Privacy Policy</a>
+        </div>
+      </div>
     </div>
   );
 }

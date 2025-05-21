@@ -16,6 +16,9 @@ import InvestmentDetails from "./pages/investments/InvestmentDetails";
 import Wallet from "./pages/wallet/Wallet";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/admin/Dashboard";
+import TermsAndConditions from "./pages/legal/TermsAndConditions";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +39,9 @@ const App = () => (
               <Route path="/investments/:id" element={<Layout requireAuth><InvestmentDetails /></Layout>} />
               <Route path="/wallet" element={<Layout requireAuth><Wallet /></Layout>} />
               <Route path="/profile" element={<Layout requireAuth><Profile /></Layout>} />
+              <Route path="/admin" element={<Layout requireAuth><AdminDashboard /></Layout>} />
+              <Route path="/terms-and-conditions" element={<Layout><TermsAndConditions /></Layout>} />
+              <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

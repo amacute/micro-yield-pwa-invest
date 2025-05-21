@@ -9,13 +9,218 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      investments: {
+        Row: {
+          category: string
+          created_at: string
+          creator_id: string | null
+          description: string
+          duration: number
+          end_time: string
+          goal: number
+          id: string
+          investors: number
+          max_investment: number
+          min_investment: number
+          raised: number
+          return_rate: number
+          risk: string
+          status: string
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          creator_id?: string | null
+          description: string
+          duration: number
+          end_time: string
+          goal: number
+          id?: string
+          investors?: number
+          max_investment: number
+          min_investment: number
+          raised?: number
+          return_rate: number
+          risk: string
+          status: string
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          creator_id?: string | null
+          description?: string
+          duration?: number
+          end_time?: string
+          goal?: number
+          id?: string
+          investors?: number
+          max_investment?: number
+          min_investment?: number
+          raised?: number
+          return_rate?: number
+          risk?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      p2p_investments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          investor_id: string
+          loan_id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          investor_id: string
+          loan_id: string
+          status: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          investor_id?: string
+          loan_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2p_investments_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "p2p_loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2p_loans: {
+        Row: {
+          amount: number
+          borrower_id: string
+          created_at: string
+          id: string
+          interest_rate: number
+          purpose: string
+          risk: string
+          status: string
+          term: number
+        }
+        Insert: {
+          amount: number
+          borrower_id: string
+          created_at?: string
+          id?: string
+          interest_rate: number
+          purpose: string
+          risk: string
+          status: string
+          term: number
+        }
+        Update: {
+          amount?: number
+          borrower_id?: string
+          created_at?: string
+          id?: string
+          interest_rate?: number
+          purpose?: string
+          risk?: string
+          status?: string
+          term?: number
+        }
+        Relationships: []
+      }
+      user_investments: {
+        Row: {
+          amount: number
+          created_at: string
+          end_date: string
+          expected_return: number
+          id: string
+          investment_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          end_date: string
+          expected_return: number
+          id?: string
+          investment_id: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          end_date?: string
+          expected_return?: number
+          id?: string
+          investment_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_investments_investment_id_fkey"
+            columns: ["investment_id"]
+            isOneToOne: false
+            referencedRelation: "investments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          kyc_verified: boolean
+          name: string | null
+          user_id: string
+          wallet_balance: number
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          kyc_verified?: boolean
+          name?: string | null
+          user_id: string
+          wallet_balance?: number
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          kyc_verified?: boolean
+          name?: string | null
+          user_id?: string
+          wallet_balance?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_p2p_match: {
+        Args: { loan_id: string; investor_ids: string[]; amounts: number[] }
+        Returns: Json
+      }
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

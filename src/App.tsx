@@ -27,24 +27,22 @@ const App = () => (
     <BrowserRouter>
       <AuthProvider>
         <InvestmentProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route path="/" element={<Layout><LandingPage /></Layout>} />
-              <Route path="/login" element={<Layout><Login /></Layout>} />
-              <Route path="/signup" element={<Layout><Signup /></Layout>} />
-              <Route path="/dashboard" element={<Layout requireAuth><Dashboard /></Layout>} />
-              <Route path="/investments" element={<Layout requireAuth><Investments /></Layout>} />
-              <Route path="/investments/:id" element={<Layout requireAuth><InvestmentDetails /></Layout>} />
-              <Route path="/wallet" element={<Layout requireAuth><Wallet /></Layout>} />
-              <Route path="/profile" element={<Layout requireAuth><Profile /></Layout>} />
-              <Route path="/admin" element={<Layout requireAuth><AdminDashboard /></Layout>} />
-              <Route path="/terms-and-conditions" element={<Layout><TermsAndConditions /></Layout>} />
-              <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/" element={<Layout><LandingPage /></Layout>} />
+            <Route path="/login" element={<Layout><Login /></Layout>} />
+            <Route path="/signup" element={<Layout><Signup /></Layout>} />
+            <Route path="/dashboard" element={<Layout requireAuth><Dashboard /></Layout>} />
+            <Route path="/investments" element={<Layout requireAuth><Investments /></Layout>} />
+            <Route path="/investments/:id" element={<Layout requireAuth><InvestmentDetails /></Layout>} />
+            <Route path="/wallet" element={<Layout requireAuth><Wallet /></Layout>} />
+            <Route path="/profile" element={<Layout requireAuth><Profile /></Layout>} />
+            <Route path="/admin" element={<Layout requireAuth><AdminDashboard /></Layout>} />
+            <Route path="/terms-and-conditions" element={<Layout><TermsAndConditions /></Layout>} />
+            <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </InvestmentProvider>
       </AuthProvider>
     </BrowserRouter>

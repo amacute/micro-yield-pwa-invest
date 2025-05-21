@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { toast } from '@/components/ui/sonner';
 import { useAuth } from './AuthContext';
@@ -220,7 +219,7 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
       setUserInvestments(prev => 
         prev.map(inv => 
           inv.id === userInvestmentId 
-            ? { ...inv, status: 'completed' } 
+            ? { ...inv, status: 'completed' as const } 
             : inv
         )
       );
@@ -261,7 +260,7 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
       setUserInvestments(prev => [
         ...prev.map(inv => 
           inv.id === userInvestmentId 
-            ? { ...inv, status: 'completed' } 
+            ? { ...inv, status: 'completed' as const } 
             : inv
         ),
         newUserInvestment

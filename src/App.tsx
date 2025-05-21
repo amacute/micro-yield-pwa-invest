@@ -1,9 +1,20 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { AuthProvider } from "./contexts/AuthContext";
+import { InvestmentProvider } from "./contexts/InvestmentContext";
+import { Layout } from "./components/layout/Layout";
+import LandingPage from "./pages/LandingPage";
+import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
+import Dashboard from "./pages/Dashboard";
+import Investments from "./pages/investments/Investments";
+import InvestmentDetails from "./pages/investments/InvestmentDetails";
+import Wallet from "./pages/wallet/Wallet";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -11,15 +22,25 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <InvestmentProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Layout><LandingPage /></Layout>} />
+              <Route path="/login" element={<Layout><Login /></Layout>} />
+              <Route path="/signup" element={<Layout><Signup /></Layout>} />
+              <Route path="/dashboard" element={<Layout requireAuth><Dashboard /></Layout>} />
+              <Route path="/investments" element={<Layout requireAuth><Investments /></Layout>} />
+              <Route path="/investments/:id" element={<Layout requireAuth><InvestmentDetails /></Layout>} />
+              <Route path="/wallet" element={<Layout requireAuth><Wallet /></Layout>} />
+              <Route path="/profile" element={<Layout requireAuth><Profile /></Layout>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </InvestmentProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

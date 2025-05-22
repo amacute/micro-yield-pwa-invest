@@ -12,6 +12,8 @@ interface AdminStatsCardProps {
     value: number;
     positive: boolean;
   };
+  iconBgClass?: string;
+  iconClass?: string;
   className?: string;
 }
 
@@ -21,6 +23,8 @@ export function AdminStatsCard({
   icon,
   description,
   trend,
+  iconBgClass,
+  iconClass,
   className
 }: AdminStatsCardProps) {
   return (
@@ -38,7 +42,9 @@ export function AdminStatsCard({
               </div>
             )}
           </div>
-          <div className="p-3 bg-muted/50 rounded-full">{icon}</div>
+          <div className={cn("p-3 bg-muted/50 rounded-full", iconBgClass)}>
+            <div className={cn(iconClass)}>{icon}</div>
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -69,6 +69,9 @@ export function Header() {
                       <Link to="/help" className="block px-3 py-2 rounded-md hover:bg-muted">
                         Help Center
                       </Link>
+                      <Link to="/admin" className="block px-3 py-2 rounded-md hover:bg-muted">
+                        Admin Portal
+                      </Link>
                     </nav>
 
                     <Button onClick={logout} variant="outline" className="w-full mt-6">
@@ -85,6 +88,9 @@ export function Header() {
               </Link>
               <Link to="/signup">
                 <Button variant="default">Sign Up</Button>
+              </Link>
+              <Link to="/admin-auth">
+                <Button variant="outline">Admin Portal</Button>
               </Link>
             </>
           )}
@@ -142,6 +148,9 @@ export function Header() {
                   <Link to="/profile" className="p-3 hover:bg-muted rounded-md" onClick={() => setMobileMenuOpen(false)}>
                     Profile
                   </Link>
+                  <Link to="/admin" className="p-3 hover:bg-muted rounded-md" onClick={() => setMobileMenuOpen(false)}>
+                    Admin Portal
+                  </Link>
                   <Button onClick={logout} variant="outline" className="w-full mt-4">
                     Log Out
                   </Button>
@@ -153,6 +162,9 @@ export function Header() {
                   </Link>
                   <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
                     <Button variant="default" className="w-full">Sign Up</Button>
+                  </Link>
+                  <Link to="/admin-auth" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">Admin Portal</Button>
                   </Link>
                 </>
               )}

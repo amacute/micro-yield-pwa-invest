@@ -7,6 +7,7 @@ import { Navbar } from './Navbar';
 import { Loader } from '@/components/common/Loader';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { CustomerCareChat } from '@/components/support/CustomerCareChat';
 
 interface LayoutProps {
   children: ReactNode;
@@ -73,6 +74,9 @@ export function Layout({ children, requireAuth = false }: LayoutProps) {
             <a href="/privacy-policy" className="hover:underline">Privacy Policy</a>
           </div>
         </div>
+        
+        {/* Add the customer care chat component */}
+        <CustomerCareChat />
       </div>
     </TooltipProvider>
   );

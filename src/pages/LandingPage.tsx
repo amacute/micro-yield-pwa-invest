@@ -1,7 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Shield, Clock, PieChart, Wallet } from 'lucide-react';
+import { ArrowRight, Shield, Clock, PieChart, Wallet, MessageCircle } from 'lucide-react';
 
 export default function LandingPage() {
   return (
@@ -26,7 +26,7 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/signup">
                   <Button size="lg" className="w-full sm:w-auto btn-gradient">
-                    Get Started <ArrowRight className="ml-2 h-4 w-4" />
+                    Create Account <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
                 
@@ -127,6 +127,37 @@ export default function LandingPage() {
                 <p className="text-muted-foreground">{feature.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+      
+      {/* Customer Support Section - New */}
+      <section className="py-16 bg-white dark:bg-axiom-dark">
+        <div className="container mx-auto max-w-5xl px-6">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl font-bold mb-4">24/7 Customer Support</h2>
+              <p className="text-muted-foreground mb-6">
+                Have questions? Our AI assistant is available round-the-clock to help you navigate our platform and answer your investment queries.
+              </p>
+              <div className="flex items-center bg-muted/50 p-4 rounded-lg mb-4">
+                <div className="p-3 bg-axiom-primary/10 rounded-full mr-4">
+                  <MessageCircle className="h-5 w-5 text-axiom-primary" />
+                </div>
+                <p className="text-sm italic">"How do I start investing with just $10?"</p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Just click the chat bubble in the corner to start a conversation with our AI assistant anytime.
+              </p>
+            </div>
+            <div className="relative">
+              <div className="bg-gradient-to-r from-axiom-primary/20 to-axiom-secondary/20 h-full w-full absolute rounded-2xl transform rotate-3"></div>
+              <img 
+                src="https://i.imgur.com/YcMkQad.png" 
+                alt="Customer support chat interface" 
+                className="relative z-10 rounded-xl shadow-lg" 
+              />
+            </div>
           </div>
         </div>
       </section>

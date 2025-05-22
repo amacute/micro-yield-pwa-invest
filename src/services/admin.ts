@@ -105,46 +105,58 @@ export const createP2PMatch = async (loanId: string, investorMatches: { id: stri
   }
   
   toast.success('P2P match created successfully');
-  return data;
+  return { ...data, success: true };
 };
 
 // Analytics
 export const fetchAnalyticsData = async () => {
-  const promises = [
-    // User stats
-    supabase.from('users').select('count').single(),
-    supabase.from('users').select('count').eq('kyc_verified', true).single(),
+  try {
+    const promises = [
+      // User stats
+      supabase.from('users').select('count').single(),
+      supabase.from('users').select('count').eq('kyc_verified', true).single(),
+      
+      // Investment stats
+      supabase.from('investments').select('count').single(),
+      supabase.from('investments').select('sum(raised)').single(),
+      
+      // P2P stats
+      supabase.from('p2p_loans').select('count').single(),
+      supabase.from('p2p_loans').select('sum(amount)').eq('status', 'funded').single()
+    ];
     
-    // Investment stats
-    supabase.from('investments').select('count').single(),
-    supabase.from('investments').select('sum(raised)').single(),
+    const [
+      totalUsersResult,
+      verifiedUsersResult,
+      totalInvestmentsResult,
+      totalRaisedResult,
+      totalLoansResult,
+      totalFundedLoansResult
+    ] = await Promise.all(promises);
     
-    // P2P stats
-    supabase.from('p2p_loans').select('count').single(),
-    supabase.from('p2p_loans').select('sum(amount)').eq('status', 'funded').single()
-  ];
-  
-  const [
-    totalUsersResult,
-    verifiedUsersResult,
-    totalInvestmentsResult,
-    totalRaisedResult,
-    totalLoansResult,
-    totalFundedLoansResult
-  ] = await Promise.all(promises);
-  
-  return {
-    userStats: {
-      total: totalUsersResult.data?.count || 0,
-      verified: verifiedUsersResult.data?.count || 0
-    },
-    investmentStats: {
-      total: totalInvestmentsResult.data?.count || 0,
-      raised: totalRaisedResult.data?.sum || 0
-    },
-    loanStats: {
-      total: totalLoansResult.data?.count || 0,
-      funded: totalFundedLoansResult.data?.sum || 0
-    }
-  };
+    return {
+      userStats: {
+        total: totalUsersResult.data?.count || 0,
+        verified: verifiedUsersResult.data?.count || 0
+      },
+      investmentStats: {
+        total: totalInvestmentsResult.data?.count || 0,
+        raised: totalRaisedResult.data?.sum || 0
+      },
+      loanStats: {
+        total: totalLoansResult.data?.count || 0,
+        funded: totalFundedLoansResult.data?.sum || 0
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching analytics data:', error);
+    toast.error('Failed to load analytics data');
+    
+    // Return default values in case of error
+    return {
+      userStats: { total: 0, verified: 0 },
+      investmentStats: { total: 0, raised: 0 },
+      loanStats: { total: 0, funded: 0 }
+    };
+  }
 };

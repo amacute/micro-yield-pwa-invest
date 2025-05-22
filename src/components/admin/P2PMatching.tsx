@@ -94,7 +94,8 @@ export function P2PMatching() {
     try {
       const result = await createP2PMatch(selectedLoan, selectedInvestorsList);
       
-      if (result.success) {
+      // Check if the result has the expected structure
+      if (result && typeof result === 'object' && 'success' in result && result.success) {
         // Refresh the data
         const [loans, investors] = await Promise.all([
           fetchPendingLoans(),

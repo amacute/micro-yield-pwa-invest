@@ -1,13 +1,13 @@
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { Users, Clock, ArrowUp, ArrowDown } from 'lucide-react';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { InvestmentManagement } from '@/components/admin/InvestmentManagement';
 import { P2PMatching } from '@/components/admin/P2PMatching';
 import { DataAnalytics } from '@/components/admin/DataAnalytics';
+import { AdminStatsCard } from '@/components/admin/AdminStatsCard';
+import { AdminDashboardHeader } from '@/components/admin/AdminDashboardHeader';
 
 export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState('overview');
@@ -22,69 +22,43 @@ export default function AdminDashboard() {
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage platform investments and users</p>
-        </div>
-      </div>
+      <AdminDashboardHeader 
+        title="Admin Dashboard" 
+        description="Manage platform investments and users" 
+      />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Users</p>
-                <p className="text-2xl font-bold">{stats.totalUsers}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <AdminStatsCard
+          title="Total Users"
+          value={stats.totalUsers}
+          icon={<Users />}
+          iconBgClass="bg-blue-100 dark:bg-blue-900/30"
+          iconClass="text-blue-600 dark:text-blue-400"
+        />
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
-                <ArrowUp className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Active Investments</p>
-                <p className="text-2xl font-bold">{stats.activeInvestments}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <AdminStatsCard
+          title="Active Investments"
+          value={stats.activeInvestments}
+          icon={<ArrowUp />}
+          iconBgClass="bg-green-100 dark:bg-green-900/30"
+          iconClass="text-green-600 dark:text-green-400"
+        />
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-                <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Completed Investments</p>
-                <p className="text-2xl font-bold">{stats.completedInvestments}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <AdminStatsCard
+          title="Completed Investments"
+          value={stats.completedInvestments}
+          icon={<Clock />}
+          iconBgClass="bg-purple-100 dark:bg-purple-900/30"
+          iconClass="text-purple-600 dark:text-purple-400"
+        />
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
-                <ArrowDown className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Volume</p>
-                <p className="text-2xl font-bold">${stats.totalVolume.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <AdminStatsCard
+          title="Total Volume"
+          value={`$${stats.totalVolume.toLocaleString()}`}
+          icon={<ArrowDown />}
+          iconBgClass="bg-yellow-100 dark:bg-yellow-900/30"
+          iconClass="text-yellow-600 dark:text-yellow-400"
+        />
       </div>
       
       <Tabs defaultValue="overview" value={selectedTab} onValueChange={setSelectedTab}>

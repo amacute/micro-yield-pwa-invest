@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { fetchUsers } from '@/services/admin';
 import { toast } from '@/components/ui/sonner';
@@ -6,6 +5,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Check, AlertCircle, Search, UserRoundCog } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Dialog,
   DialogContent,

@@ -105,34 +105,23 @@ export const createP2PMatch = async (loanId: string, investorMatches: { id: stri
   }
   
   toast.success('P2P match created successfully');
-  return { ...data, success: true };
+  return { success: true, ...(data as Record<string, unknown>) };
 };
 
 // Analytics
 export const fetchAnalyticsData = async () => {
   try {
-    const promises = [
-      // User stats
-      supabase.from('users').select('count').single(),
-      supabase.from('users').select('count').eq('kyc_verified', true).single(),
-      
-      // Investment stats
-      supabase.from('investments').select('count').single(),
-      supabase.from('investments').select('sum(raised)').single(),
-      
-      // P2P stats
-      supabase.from('p2p_loans').select('count').single(),
-      supabase.from('p2p_loans').select('sum(amount)').eq('status', 'funded').single()
-    ];
+    // User stats
+    const totalUsersResult = await supabase.from('users').select('count').single();
+    const verifiedUsersResult = await supabase.from('users').select('count').eq('kyc_verified', true).single();
     
-    const [
-      totalUsersResult,
-      verifiedUsersResult,
-      totalInvestmentsResult,
-      totalRaisedResult,
-      totalLoansResult,
-      totalFundedLoansResult
-    ] = await Promise.all(promises);
+    // Investment stats
+    const totalInvestmentsResult = await supabase.from('investments').select('count').single();
+    const totalRaisedResult = await supabase.from('investments').select('sum(raised)').single();
+    
+    // P2P stats
+    const totalLoansResult = await supabase.from('p2p_loans').select('count').single();
+    const totalFundedLoansResult = await supabase.from('p2p_loans').select('sum(amount)').eq('status', 'funded').single();
     
     return {
       userStats: {

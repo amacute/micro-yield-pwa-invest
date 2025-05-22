@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { fetchAnalyticsData } from '@/services/admin';
 import { CircleDollarSign, Users, ArrowUpRightSquare, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AnalyticCard } from './analytics/AnalyticCard';
+import { AnalyticChart } from './analytics/AnalyticChart';
 
 export function DataAnalytics() {
   const [analyticsData, setAnalyticsData] = useState<any>(null);
@@ -51,37 +52,15 @@ export function DataAnalytics() {
         <h2 className="text-xl font-semibold">Analytics Dashboard</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array(6).fill(0).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="pb-2">
-                <Skeleton className="h-5 w-24" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-10 w-16" />
-              </CardContent>
-            </Card>
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-10 w-16" />
+            </div>
           ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-32" />
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <Skeleton className="w-full h-full" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-32" />
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <Skeleton className="w-full h-full" />
-              </div>
-            </CardContent>
-          </Card>
+          <Skeleton className="h-[350px]" />
+          <Skeleton className="h-[350px]" />
         </div>
       </div>
     );
@@ -93,153 +72,89 @@ export function DataAnalytics() {
       
       {/* Key metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">
-              Total Users
-            </CardTitle>
-            <Users className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {analyticsData?.userStats?.total || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {analyticsData?.userStats?.verified || 0} verified
-            </p>
-          </CardContent>
-        </Card>
+        <AnalyticCard
+          title="Total Users"
+          value={analyticsData?.userStats?.total || 0}
+          description={`${analyticsData?.userStats?.verified || 0} verified`}
+          icon={<Users />}
+        />
         
-        <Card>
-          <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">
-              Total Investments
-            </CardTitle>
-            <ArrowUpRightSquare className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {analyticsData?.investmentStats?.total || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Active opportunities
-            </p>
-          </CardContent>
-        </Card>
+        <AnalyticCard
+          title="Total Investments"
+          value={analyticsData?.investmentStats?.total || 0}
+          description="Active opportunities"
+          icon={<ArrowUpRightSquare />}
+        />
         
-        <Card>
-          <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">
-              P2P Loans
-            </CardTitle>
-            <TrendingUp className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {analyticsData?.loanStats?.total || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Matching opportunities
-            </p>
-          </CardContent>
-        </Card>
+        <AnalyticCard
+          title="P2P Loans"
+          value={analyticsData?.loanStats?.total || 0}
+          description="Matching opportunities"
+          icon={<TrendingUp />}
+        />
         
-        <Card>
-          <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">
-              Total Investment Volume
-            </CardTitle>
-            <CircleDollarSign className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${(analyticsData?.investmentStats?.raised || 0).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Capital deployed
-            </p>
-          </CardContent>
-        </Card>
+        <AnalyticCard
+          title="Total Investment Volume"
+          value={`$${(analyticsData?.investmentStats?.raised || 0).toLocaleString()}`}
+          description="Capital deployed"
+          icon={<CircleDollarSign />}
+        />
         
-        <Card>
-          <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">
-              P2P Funded Amount
-            </CardTitle>
-            <CircleDollarSign className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${(analyticsData?.loanStats?.funded || 0).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Peer-to-peer lending
-            </p>
-          </CardContent>
-        </Card>
+        <AnalyticCard
+          title="P2P Funded Amount"
+          value={`$${(analyticsData?.loanStats?.funded || 0).toLocaleString()}`}
+          description="Peer-to-peer lending"
+          icon={<CircleDollarSign />}
+        />
       </div>
       
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Investment Volume</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ChartContainer
-                config={{
-                  volume: {
-                    color: "#0EA5E9",
-                  },
-                }}
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={investmentData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="volume" name="Volume" fill="var(--color-volume)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-          </CardContent>
-        </Card>
+        <AnalyticChart title="Investment Volume">
+          <ChartContainer
+            config={{
+              volume: {
+                color: "#0EA5E9",
+              },
+            }}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={investmentData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="volume" name="Volume" fill="var(--color-volume)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </AnalyticChart>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>User Growth</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ChartContainer
-                config={{
-                  users: {
-                    color: "#10B981",
-                  },
-                }}
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={userGrowthData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip content={<ChartTooltipContent />} />
-                    <Line
-                      type="monotone"
-                      dataKey="users"
-                      stroke="var(--color-users)"
-                      strokeWidth={2}
-                      activeDot={{ r: 8 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-          </CardContent>
-        </Card>
+        <AnalyticChart title="User Growth">
+          <ChartContainer
+            config={{
+              users: {
+                color: "#10B981",
+              },
+            }}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={userGrowthData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip content={<ChartTooltipContent />} />
+                <Line
+                  type="monotone"
+                  dataKey="users"
+                  stroke="var(--color-users)"
+                  strokeWidth={2}
+                  activeDot={{ r: 8 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </AnalyticChart>
       </div>
     </div>
   );

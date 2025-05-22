@@ -10,6 +10,7 @@ import { Layout } from "./components/layout/Layout";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
+import EmailVerification from "./pages/auth/EmailVerification";
 import Dashboard from "./pages/Dashboard";
 import Investments from "./pages/investments/Investments";
 import InvestmentDetails from "./pages/investments/InvestmentDetails";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/" element={<Layout><LandingPage /></Layout>} />
             <Route path="/login" element={<Layout><Login /></Layout>} />
             <Route path="/signup" element={<Layout><Signup /></Layout>} />
+            <Route path="/verify-email" element={<Layout><EmailVerification /></Layout>} />
             <Route path="/dashboard" element={<Layout requireAuth><Dashboard /></Layout>} />
             <Route path="/investments" element={<Layout requireAuth><Investments /></Layout>} />
             <Route path="/investments/:id" element={<Layout requireAuth><InvestmentDetails /></Layout>} />

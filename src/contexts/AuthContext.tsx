@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { toast } from '@/components/ui/sonner';
+import { supabase } from "@/integrations/supabase/client";
 
 type User = {
   id: string;
@@ -9,6 +10,7 @@ type User = {
   avatar?: string;
   walletBalance: number;
   kycVerified: boolean;
+  emailVerified: boolean;
 };
 
 type AuthContextType = {
@@ -18,6 +20,8 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  sendEmailVerification: (email: string) => Promise<void>;
+  verifyEmail: (token: string) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,6 +66,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           email: 'demo@axiomify.com',
           walletBalance: 1200.50,
           kycVerified: true,
+          emailVerified: true,
           avatar: 'https://i.pravatar.cc/150?u=demo@axiomify.com'
         };
         
@@ -79,6 +84,61 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const sendEmailVerification = async (email: string) => {
+    try {
+      // In a real app this would call your Supabase Edge Function
+      await fetch('https://vyensygnzdllcwyzuxkq.supabase.co/functions/v1/verify-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZW5zeWduemRsbGN3eXp1eGtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4MzI1NTksImV4cCI6MjA2MzQwODU1OX0.pcfG8-ggEjuGhvB1VtxUORKPB4cTWLsFM_ZFCxvWE_g`
+        },
+        body: JSON.stringify({ email })
+      });
+      
+      toast.success('Verification email sent! Please check your inbox.');
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      toast.error('Failed to send verification email. Please try again.');
+    }
+  };
+
+  const verifyEmail = async (token: string): Promise<boolean> => {
+    try {
+      // In a real app this would call your Supabase Edge Function
+      const response = await fetch('https://vyensygnzdllcwyzuxkq.supabase.co/functions/v1/confirm-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZW5zeWduemRsbGN3eXp1eGtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4MzI1NTksImV4cCI6MjA2MzQwODU1OX0.pcfG8-ggEjuGhvB1VtxUORKPB4cTWLsFM_ZFCxvWE_g`
+        },
+        body: JSON.stringify({ token })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Email verified successfully!');
+        
+        // Update user if they are logged in
+        if (user) {
+          const updatedUser = {...user, emailVerified: true};
+          setUser(updatedUser);
+          localStorage.setItem('axiomify_user', JSON.stringify(updatedUser));
+        }
+        
+        return true;
+      } else {
+        toast.error('Failed to verify email. Token may be invalid or expired.');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error verifying email:', error);
+      toast.error('Failed to verify email. Please try again.');
+      return false;
+    }
+  };
+
   const signup = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
@@ -92,11 +152,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         email,
         walletBalance: 0,
         kycVerified: false,
+        emailVerified: false,
       };
       
       setUser(mockUser);
       localStorage.setItem('axiomify_user', JSON.stringify(mockUser));
-      toast.success('Account created successfully!');
+      
+      // Send verification email
+      await sendEmailVerification(email);
+      
+      toast.success('Account created successfully! Please verify your email.');
     } catch (error) {
       toast.error('Signup failed. Please try again.');
       console.error(error);
@@ -120,6 +185,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         login,
         signup,
         logout,
+        sendEmailVerification,
+        verifyEmail
       }}
     >
       {children}

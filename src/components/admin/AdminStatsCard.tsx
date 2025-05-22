@@ -12,7 +12,7 @@ interface AdminStatsCardProps {
     value: number;
     positive: boolean;
   };
-  className?: string; // Added className prop
+  className?: string;
 }
 
 export function AdminStatsCard({

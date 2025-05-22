@@ -11,10 +11,48 @@ export default function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const { signup, isLoading } = useAuth();
+
+  const validatePassword = (value: string) => {
+    if (value.length < 8) {
+      return "Password must be at least 8 characters long";
+    }
+    if (!/[A-Z]/.test(value)) {
+      return "Password must contain at least one uppercase letter";
+    }
+    if (!/[a-z]/.test(value)) {
+      return "Password must contain at least one lowercase letter";
+    }
+    if (!/[0-9]/.test(value)) {
+      return "Password must contain at least one number";
+    }
+    return "";
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPassword(value);
+    setPasswordError(validatePassword(value));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate password
+    const passwordValidationError = validatePassword(password);
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
+      return;
+    }
+    
+    // Check if passwords match
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+    
     await signup(name, email, password);
   };
 
@@ -62,18 +100,35 @@ export default function Signup() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 required
               />
+              {passwordError && (
+                <p className="text-xs text-red-500">
+                  {passwordError}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">
-                Password must be at least 8 characters long
+                Password must be at least 8 characters with uppercase, lowercase, and numbers
               </p>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="confirmPassword" className="text-sm font-medium">
+                Confirm Password
+              </label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
             </div>
             
             <Button 
               type="submit" 
               className="w-full btn-gradient" 
-              disabled={isLoading}
+              disabled={isLoading || !!passwordError}
             >
               {isLoading ? <Loader size="small" color="text-white" /> : 'Create Account'}
             </Button>

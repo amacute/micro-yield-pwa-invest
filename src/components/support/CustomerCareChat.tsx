@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageCircle, Send, User, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from '@/components/ui/sonner';
 
 interface Message {
   id: string;
@@ -16,6 +17,8 @@ interface Message {
 interface CustomerCareChatProps {
   className?: string;
 }
+
+const AI_API_KEY = '6d432c28038d77b50025adad10f0e824';
 
 export const CustomerCareChat = ({ className }: CustomerCareChatProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,34 +58,57 @@ export const CustomerCareChat = ({ className }: CustomerCareChatProps) => {
     // Simulate bot typing
     setIsTyping(true);
     
-    // Simulate bot response based on keywords
-    setTimeout(() => {
-      setIsTyping(false);
+    try {
+      // Call our Supabase edge function with the OpenAI integration
+      const response = await fetch('https://vyensygnzdllcwyzuxkq.supabase.co/functions/v1/chatbot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZW5zeWduemRsbGN3eXp1eGtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4MzI1NTksImV4cCI6MjA2MzQwODU1OX0.pcfG8-ggEjuGhvB1VtxUORKPB4cTWLsFM_ZFCxvWE_g`,
+          'apikey': AI_API_KEY
+        },
+        body: JSON.stringify({
+          message: message,
+          previousMessages: messages.map(msg => ({
+            role: msg.isBot ? 'assistant' : 'user',
+            content: msg.content
+          }))
+        })
+      });
       
-      let botResponse = "I'm not sure how to help with that. Would you like to speak with a human agent?";
-      
-      // Simple keyword matching for demo purposes
-      const lowerMessage = message.toLowerCase();
-      
-      if (lowerMessage.includes('investment') || lowerMessage.includes('invest')) {
-        botResponse = "Our P2P investment platform offers various investment opportunities with different risk profiles. The minimum investment amount is $10. Would you like me to explain more about specific investment types?";
-      } else if (lowerMessage.includes('account') || lowerMessage.includes('sign up') || lowerMessage.includes('register')) {
-        botResponse = "You can create an account by clicking on the 'Sign Up' button in the top navigation bar. The process takes less than a minute!";
-      } else if (lowerMessage.includes('withdraw') || lowerMessage.includes('deposit')) {
-        botResponse = "You can manage deposits and withdrawals from your wallet page after logging in. We support multiple payment methods including bank transfers and cards.";
-      } else if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-        botResponse = "Hello! How can I assist you today with Axiomify's services?";
+      if (!response.ok) {
+        throw new Error('Failed to get response from AI');
       }
       
+      const data = await response.json();
+      
+      // Add bot response
       const newBotMessage: Message = {
         id: Date.now().toString(),
-        content: botResponse,
+        content: data.response || "I'm sorry, I couldn't process that request. Can you try again?",
         isBot: true,
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, newBotMessage]);
-    }, 1500);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      
+      // Fallback response if the API call fails
+      setTimeout(() => {
+        const fallbackMessage: Message = {
+          id: Date.now().toString(),
+          content: "I'm having trouble connecting to my services right now. Please try again later or contact our support team directly.",
+          isBot: true,
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, fallbackMessage]);
+        toast.error('Failed to connect to AI services');
+      }, 1000);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (

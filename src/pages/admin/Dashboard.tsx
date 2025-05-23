@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, LineChart, DollarSign, PieChart, MessageSquare } from 'lucide-react';
@@ -8,12 +9,24 @@ import { DataAnalytics } from '@/components/admin/DataAnalytics';
 import { AdminStatsCard } from '@/components/admin/AdminStatsCard';
 import { AdminDashboardHeader } from '@/components/admin/AdminDashboardHeader';
 import { AdminMessaging } from '@/components/admin/AdminMessaging';
+import { toast } from '@/components/ui/sonner';
+
+type AdminStat = {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  change?: {
+    value: string;
+    label: string;
+    positive: boolean;
+  };
+};
 
 export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState('overview');
   
   // Mock admin stats
-  const stats = [
+  const stats: AdminStat[] = [
     {
       title: "Total Users",
       value: "1,246",
@@ -70,7 +83,6 @@ export default function AdminDashboard() {
             title={stat.title}
             value={stat.value}
             icon={stat.icon}
-            change={stat.change}
           />
         ))}
       </div>

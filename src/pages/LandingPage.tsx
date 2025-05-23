@@ -1,237 +1,107 @@
 
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Shield, Clock, PieChart, Wallet, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex flex-col min-h-[calc(100vh-4rem)]">
       {/* Hero Section */}
-      <section className="py-16 md:py-24 px-6">
-        <div className="container mx-auto max-w-5xl">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-axiom-primary to-axiom-secondary">
-                  P2P Investment
-                </span>{" "}
-                Platform for Everyone
-              </h1>
-              
-              <p className="text-lg text-muted-foreground">
-                Connect directly with high-yield investment opportunities 
-                on a transparent, easy-to-use platform.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/signup">
-                  <Button size="lg" className="w-full sm:w-auto btn-gradient">
-                    Create Account <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                
-                <Link to="/login">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                    Log In
-                  </Button>
-                </Link>
-              </div>
-              
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-muted border-2 border-background"></div>
-                  ))}
-                </div>
-                <p>Trusted by 1000+ investors</p>
-              </div>
+      <section className="flex-1 py-20 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-black">
+        <div className="container mx-auto px-4 flex flex-col-reverse md:flex-row items-center justify-between">
+          <div className="md:w-1/2 space-y-6 mt-8 md:mt-0">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight">
+              Invest Smarter, <span className="text-axiom-primary">Grow Faster</span>
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Discover high-return investment opportunities with Axiomify. Start your journey to financial freedom today.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <Link to="/signup">
+                <Button className="text-lg h-12 px-8 btn-gradient">Get Started</Button>
+              </Link>
+              <Link to="/investments">
+                <Button variant="outline" className="text-lg h-12 px-8">
+                  View Investments
+                </Button>
+              </Link>
             </div>
-            
-            <div className="relative">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-axiom-primary/20 rounded-full blur-3xl"></div>
-              <div className="relative z-10 bg-white dark:bg-axiom-dark rounded-2xl border shadow-lg p-6 animate-fade-in">
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Balance</p>
-                    <h3 className="text-2xl font-bold">$1,250.50</h3>
-                  </div>
-                  <div className="p-3 bg-axiom-primary/10 rounded-full">
-                    <Wallet className="h-5 w-5 text-axiom-primary" />
-                  </div>
-                </div>
-                
-                <div className="h-1 bg-muted mb-6 rounded-full overflow-hidden">
-                  <div className="h-full w-3/4 bg-gradient-to-r from-axiom-primary to-axiom-secondary"></div>
-                </div>
-                
-                <div className="space-y-4">
-                  {[
-                    { name: "Urban Development", amount: "$500", return: "+15%" },
-                    { name: "Tech Startup", amount: "$350", return: "+20%" },
-                    { name: "P2P Loan Bundle", amount: "$400.50", return: "+12%" }
-                  ].map((item, i) => (
-                    <div key={i} className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-axiom-primary/10 flex items-center justify-center">
-                          <PieChart className="h-4 w-4 text-axiom-primary" />
-                        </div>
-                        <span>{item.name}</span>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-medium">{item.amount}</div>
-                        <div className="text-xs text-green-600">{item.return}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <div className="pt-4 flex flex-col sm:flex-row gap-8">
+              <div>
+                <p className="text-3xl font-bold text-axiom-primary">100%</p>
+                <p className="text-sm text-muted-foreground">Return on Investment</p>
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-axiom-primary">72h</p>
+                <p className="text-sm text-muted-foreground">Investment Timeline</p>
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-axiom-primary">10K+</p>
+                <p className="text-sm text-muted-foreground">Active Investors</p>
               </div>
             </div>
           </div>
+          <div className="md:w-1/2">
+            <img 
+              src="/placeholder.svg" 
+              alt="Investment Growth" 
+              className="rounded-2xl shadow-2xl" 
+              width={600} 
+              height={400} 
+            />
+          </div>
         </div>
       </section>
-      
+
       {/* Features Section */}
-      <section className="py-16 bg-muted/50">
-        <div className="container mx-auto max-w-5xl px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Why Choose Axiomify?</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Our platform offers a unique approach to investments with a focus on transparency, 
-              accessibility, and consistent returns.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: <Clock className="h-6 w-6 text-axiom-primary" />,
-                title: "72-Hour Cycle",
-                description: "Quick investment cycles with returns disbursed after just 72 hours."
-              },
-              {
-                icon: <Shield className="h-6 w-6 text-axiom-primary" />,
-                title: "Secure Platform",
-                description: "Advanced security measures to keep your investments and data safe."
-              },
-              {
-                icon: <PieChart className="h-6 w-6 text-axiom-primary" />,
-                title: "Diverse Opportunities",
-                description: "Access various investment categories with different risk levels."
-              }
-            ].map((feature, i) => (
-              <div key={i} className="bg-white dark:bg-axiom-dark p-6 rounded-xl shadow-sm border">
-                <div className="p-3 bg-axiom-primary/10 rounded-full w-fit mb-4">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-medium mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
+      <section className="py-20 bg-white dark:bg-axiom-dark">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">Why Choose Axiomify?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="p-6 border rounded-lg transition-all hover:shadow-lg">
+              <div className="h-12 w-12 rounded-full bg-axiom-primary/10 flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-axiom-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                </svg>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      
-      {/* Customer Support Section - New */}
-      <section className="py-16 bg-white dark:bg-axiom-dark">
-        <div className="container mx-auto max-w-5xl px-6">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold mb-4">24/7 Customer Support</h2>
-              <p className="text-muted-foreground mb-6">
-                Have questions? Our AI assistant is available round-the-clock to help you navigate our platform and answer your investment queries.
-              </p>
-              <div className="flex items-center bg-muted/50 p-4 rounded-lg mb-4">
-                <div className="p-3 bg-axiom-primary/10 rounded-full mr-4">
-                  <MessageCircle className="h-5 w-5 text-axiom-primary" />
-                </div>
-                <p className="text-sm italic">"How do I start investing with just $10?"</p>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Just click the chat bubble in the corner to start a conversation with our AI assistant anytime.
-              </p>
+              <h3 className="text-xl font-semibold mb-2">High Returns</h3>
+              <p className="text-muted-foreground">Enjoy up to 100% returns on your investments within 72 hours.</p>
             </div>
-            <div className="relative">
-              <div className="bg-gradient-to-r from-axiom-primary/20 to-axiom-secondary/20 h-full w-full absolute rounded-2xl transform rotate-3"></div>
-              <img 
-                src="https://i.imgur.com/YcMkQad.png" 
-                alt="Customer support chat interface" 
-                className="relative z-10 rounded-xl shadow-lg" 
-              />
+            <div className="p-6 border rounded-lg transition-all hover:shadow-lg">
+              <div className="h-12 w-12 rounded-full bg-axiom-primary/10 flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-axiom-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Secure Platform</h3>
+              <p className="text-muted-foreground">Your investments are protected with industry-leading security measures.</p>
+            </div>
+            <div className="p-6 border rounded-lg transition-all hover:shadow-lg">
+              <div className="h-12 w-12 rounded-full bg-axiom-primary/10 flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-axiom-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">P2P Transactions</h3>
+              <p className="text-muted-foreground">Seamless peer-to-peer transactions for deposits and withdrawals.</p>
             </div>
           </div>
         </div>
       </section>
-      
+
       {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-r from-axiom-primary to-axiom-secondary text-white">
-        <div className="container mx-auto max-w-5xl px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Start Investing?</h2>
-          <p className="text-white/80 max-w-2xl mx-auto mb-8">
-            Join thousands of investors already growing their wealth on our platform. 
-            Start with as little as $10.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/signup">
-              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-                Create Account
-              </Button>
-            </Link>
-            
-            <Link to="/learn">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/30 text-white hover:bg-white/20">
-                Learn More
-              </Button>
-            </Link>
-          </div>
+      <section className="py-20 bg-gradient-to-r from-axiom-primary to-axiom-secondary text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-6">Ready to Start Investing?</h2>
+          <p className="text-lg mb-8 max-w-2xl mx-auto">Join thousands of investors who have already started their journey to financial freedom with Axiomify.</p>
+          <Link to="/signup">
+            <Button className="text-lg h-12 px-8 bg-white text-axiom-primary hover:bg-gray-100">Create Account Now</Button>
+          </Link>
         </div>
       </section>
-      
-      {/* Footer */}
-      <footer className="bg-white dark:bg-axiom-dark border-t">
-        <div className="container mx-auto max-w-5xl px-6 py-12">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-axiom-primary to-axiom-secondary flex items-center justify-center text-white font-bold">A</div>
-                <span className="text-xl font-bold">Axiomify</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                A peer-to-peer investment platform for short-term, high-yield opportunities.
-              </p>
-            </div>
-            
-            {["Company", "Resources", "Support"].map((category, i) => (
-              <div key={i}>
-                <h3 className="font-medium mb-4">{category}</h3>
-                <ul className="space-y-2">
-                  {["About Us", "Careers", "Blog", "Contact"].map((item, j) => (
-                    <li key={j}>
-                      <a href="#" className="text-sm text-muted-foreground hover:text-foreground">
-                        {item}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          
-          <div className="mt-12 pt-6 border-t flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Axiomify. All rights reserved.
-            </p>
-            
-            <div className="flex gap-4 mt-4 md:mt-0">
-              {["Terms", "Privacy", "Security"].map((item, i) => (
-                <a key={i} href="#" className="text-sm text-muted-foreground hover:text-foreground">
-                  {item}
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

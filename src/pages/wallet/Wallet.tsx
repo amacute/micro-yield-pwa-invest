@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { BalanceCard } from '@/components/wallet/BalanceCard';
 import { DepositOptions } from '@/components/wallet/DepositOptions';
 import { WithdrawalOptions } from '@/components/wallet/WithdrawalOptions';
+import { P2PPayment } from '@/components/wallet/P2PPayment';
+import { VerificationForm } from '@/components/verification/VerificationForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowDown, ArrowUp, Clock, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
@@ -13,6 +15,8 @@ export default function Wallet() {
   const { user } = useAuth();
   const [showDeposit, setShowDeposit] = useState(false);
   const [showWithdrawal, setShowWithdrawal] = useState(false);
+  const [showP2P, setShowP2P] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
 
   // Mock transaction data
   const transactions = [
@@ -72,6 +76,13 @@ export default function Wallet() {
         return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
+
+  const resetViews = () => {
+    setShowDeposit(false);
+    setShowWithdrawal(false);
+    setShowP2P(false);
+    setShowVerification(false);
+  };
   
   return (
     <div className="space-y-6">
@@ -82,13 +93,13 @@ export default function Wallet() {
       
       <BalanceCard />
       
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Button 
           variant="outline" 
           className="flex-1"
           onClick={() => {
+            resetViews();
             setShowDeposit(true);
-            setShowWithdrawal(false);
           }}
         >
           Deposit Funds
@@ -97,41 +108,52 @@ export default function Wallet() {
           variant="outline" 
           className="flex-1"
           onClick={() => {
+            resetViews();
             setShowWithdrawal(true);
-            setShowDeposit(false);
           }}
         >
           Withdraw Funds
         </Button>
+        <Button 
+          variant="outline" 
+          className="flex-1"
+          onClick={() => {
+            resetViews();
+            setShowP2P(true);
+          }}
+        >
+          P2P Payment
+        </Button>
+        <Button 
+          variant="outline" 
+          className="flex-1"
+          onClick={() => {
+            resetViews();
+            setShowVerification(true);
+          }}
+        >
+          Verification
+        </Button>
       </div>
       
-      {showDeposit && (
+      {(showDeposit || showWithdrawal || showP2P || showVerification) && (
         <div>
           <Button 
             variant="ghost" 
             className="mb-4"
-            onClick={() => setShowDeposit(false)}
+            onClick={() => resetViews()}
           >
             ← Back to Transactions
           </Button>
-          <DepositOptions />
+          
+          {showDeposit && <DepositOptions />}
+          {showWithdrawal && <WithdrawalOptions />}
+          {showP2P && <P2PPayment />}
+          {showVerification && <VerificationForm />}
         </div>
       )}
       
-      {showWithdrawal && (
-        <div>
-          <Button 
-            variant="ghost" 
-            className="mb-4"
-            onClick={() => setShowWithdrawal(false)}
-          >
-            ← Back to Transactions
-          </Button>
-          <WithdrawalOptions />
-        </div>
-      )}
-      
-      {!showDeposit && !showWithdrawal && (
+      {!showDeposit && !showWithdrawal && !showP2P && !showVerification && (
         <Tabs defaultValue="all">
           <TabsList className="grid grid-cols-4 mb-4">
             <TabsTrigger value="all">All</TabsTrigger>

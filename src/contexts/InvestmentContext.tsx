@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { toast } from '@/components/ui/sonner';
 import { useAuth } from './AuthContext';
@@ -60,17 +61,17 @@ const mockInvestments: Investment[] = [
     id: '1',
     title: 'Urban Development Project',
     description: 'Fund a new urban development project in downtown area with expected high returns.',
-    amount: 0, // to be filled by investor
-    minInvestment: 10, // Updated to 10 dollars
+    amount: 0,
+    minInvestment: 10,
     maxInvestment: 5000,
-    returnRate: 15, // 15% return
+    returnRate: 100, // Updated to 100% return
     duration: 72, // 72 hours
     investors: 28,
     raised: 12560,
     goal: 25000,
     risk: 'Medium',
     category: 'Real Estate',
-    endTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3), // 3 days from now
+    endTime: new Date(Date.now() + 1000 * 60 * 60 * 72), // 72 hours from now
     createdAt: new Date(),
     status: 'active',
   },
@@ -79,16 +80,16 @@ const mockInvestments: Investment[] = [
     title: 'Tech Startup Funding',
     description: 'Support an emerging tech startup with innovative AI solutions for healthcare.',
     amount: 0,
-    minInvestment: 10, // Updated to 10 dollars
+    minInvestment: 10,
     maxInvestment: 10000,
-    returnRate: 20,
-    duration: 72,
+    returnRate: 100, // Updated to 100% return
+    duration: 72, // 72 hours
     investors: 15,
     raised: 8700,
     goal: 15000,
     risk: 'High',
     category: 'Business',
-    endTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2), // 2 days from now
+    endTime: new Date(Date.now() + 1000 * 60 * 60 * 72), // 72 hours from now
     createdAt: new Date(),
     status: 'active',
   },
@@ -97,16 +98,16 @@ const mockInvestments: Investment[] = [
     title: 'Cryptocurrency Mining Pool',
     description: 'Join a cryptocurrency mining pool with steady returns and distributed risk.',
     amount: 0,
-    minInvestment: 10, // Updated to 10 dollars
+    minInvestment: 10,
     maxInvestment: 2000,
-    returnRate: 10,
-    duration: 72,
+    returnRate: 100, // Updated to 100% return
+    duration: 72, // 72 hours
     investors: 42,
     raised: 4230,
     goal: 10000,
     risk: 'Medium',
     category: 'Crypto',
-    endTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 1), // 1 day from now
+    endTime: new Date(Date.now() + 1000 * 60 * 60 * 72), // 72 hours from now
     createdAt: new Date(),
     status: 'active',
   },
@@ -115,16 +116,16 @@ const mockInvestments: Investment[] = [
     title: 'P2P Loan Bundle',
     description: 'Diversified bundle of peer-to-peer loans across multiple industries.',
     amount: 0,
-    minInvestment: 10, // Updated to 10 dollars
+    minInvestment: 10,
     maxInvestment: 3000,
-    returnRate: 12,
-    duration: 72,
+    returnRate: 100, // Updated to 100% return
+    duration: 72, // 72 hours
     investors: 56,
     raised: 18450,
     goal: 20000,
     risk: 'Low',
     category: 'P2P',
-    endTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2.5), // 2.5 days from now
+    endTime: new Date(Date.now() + 1000 * 60 * 60 * 72), // 72 hours from now
     createdAt: new Date(),
     status: 'active',
   }

@@ -17,10 +17,15 @@ type UserType = {
 type AuthContextType = {
   user: UserType | null;
   loading: boolean;
+  isLoading: boolean; // Added for compatibility
+  isAuthenticated: boolean; // Added missing property
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   updateUserProfile?: (updates: Partial<UserType>) => void;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>; // Added missing property
+  verifyEmail: (token: string) => Promise<boolean>; // Added missing property
+  sendEmailVerification: (email: string) => Promise<void>; // Added missing property
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,6 +47,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Derived state
+  const isAuthenticated = user !== null;
 
   useEffect(() => {
     // Check if user is already logged in via localStorage
@@ -139,8 +147,47 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUser(updatedUser);
   };
 
+  // Function to update password
+  const updatePassword = async (currentPassword: string, newPassword: string) => {
+    // In a real app, this would verify the current password and update to the new one
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    // Mock success - in a real app we would verify the current password
+    return Promise.resolve();
+  };
+
+  // Function to verify email with token
+  const verifyEmail = async (token: string): Promise<boolean> => {
+    // In a real app, this would verify the token with the backend
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    // For demo, just return success if token exists
+    return Promise.resolve(!!token);
+  };
+
+  // Function to send verification email
+  const sendEmailVerification = async (email: string) => {
+    // In a real app, this would trigger an email send via the backend
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    // Mock success
+    return Promise.resolve();
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUserProfile }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      isLoading: loading,
+      isAuthenticated,
+      login, 
+      signup, 
+      logout, 
+      updateUserProfile,
+      updatePassword,
+      verifyEmail,
+      sendEmailVerification
+    }}>
       {children}
     </AuthContext.Provider>
   );

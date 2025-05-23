@@ -8,10 +8,11 @@ import { useInvestment } from '@/contexts/InvestmentContext';
 import { InvestmentCard } from '@/components/investments/InvestmentCard';
 import { Link } from 'react-router-dom';
 import { MessageBanner } from '@/components/dashboard/MessageBanner';
+import { toast } from '@/components/ui/sonner';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { userInvestments, availableInvestments } = useInvestment();
+  const { userInvestments, availableInvestments, getUserReferralLink } = useInvestment();
   
   // Get featured investments (just showing a few)
   const featuredInvestments = availableInvestments.slice(0, 2);
@@ -36,6 +37,16 @@ export default function Dashboard() {
       date: '2023-05-22'
     }
   ];
+  
+  const handleCopyReferralLink = () => {
+    if (user) {
+      const referralLink = getUserReferralLink(user.id);
+      navigator.clipboard.writeText(referralLink);
+      toast.success('Referral link copied to clipboard!');
+    } else {
+      toast.error('Please log in to get your referral link');
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -133,14 +144,9 @@ export default function Dashboard() {
           </div>
           <h3 className="text-xl font-medium mb-2">Refer a Friend</h3>
           <p className="text-muted-foreground mb-4">
-            Earn 15% for each friend who signs up and makes their first investment
+            Earn 5% for each friend who signs up and makes their first investment, plus 5% on recommitments
           </p>
-          <Button onClick={() => {
-            const user = JSON.parse(localStorage.getItem('axiomify_user') || '{}');
-            const referralLink = `https://axiomify.com/ref/${user?.id || 'unknown'}`;
-            navigator.clipboard.writeText(referralLink);
-            toast.success('Referral link copied to clipboard!');
-          }}>
+          <Button onClick={handleCopyReferralLink}>
             Copy Referral Link
           </Button>
         </CardContent>

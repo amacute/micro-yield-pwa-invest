@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Copy, Users } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
+import { useInvestment } from '@/contexts/InvestmentContext';
 
 interface ReferralDialogProps {
   open: boolean;
@@ -16,9 +17,10 @@ interface ReferralDialogProps {
 
 export function ReferralDialog({ open, onOpenChange }: ReferralDialogProps) {
   const { user } = useAuth();
+  const { getUserReferralLink } = useInvestment();
   
   // Generate a referral link
-  const referralLink = `https://axiomify.com/ref/${user?.id}`;
+  const referralLink = user ? getUserReferralLink(user.id) : 'https://axiomify.com/signup';
   
   const copyReferralLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -31,7 +33,7 @@ export function ReferralDialog({ open, onOpenChange }: ReferralDialogProps) {
         <DialogHeader>
           <DialogTitle>Refer Friends & Earn</DialogTitle>
           <DialogDescription>
-            Invite your friends to join Axiomify and earn a 15% bonus on their investments.
+            Invite your friends to join Axiomify and earn a 5% bonus on their investments, plus 5% on recommitments.
           </DialogDescription>
         </DialogHeader>
         
@@ -51,7 +53,10 @@ export function ReferralDialog({ open, onOpenChange }: ReferralDialogProps) {
               <div className="text-center">
                 <Users className="h-10 w-10 text-axiom-primary mx-auto mb-2" />
                 <h3 className="font-medium mb-1">Invite & Earn</h3>
-                <p className="text-sm text-muted-foreground">You'll receive 15% of your friend's first investment</p>
+                <p className="text-sm text-muted-foreground mb-2">You'll receive 5% of your friend's first investment</p>
+                <div className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 p-2 rounded">
+                  Plus 5% bonus on all their recommitments!
+                </div>
               </div>
             </div>
           </div>

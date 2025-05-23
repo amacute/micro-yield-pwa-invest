@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/sonner';
 import { CreditCard, Bitcoin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 export function WithdrawalOptions() {
   const [amount, setAmount] = useState<string>('');
@@ -14,6 +16,7 @@ export function WithdrawalOptions() {
   const [accountNumber, setAccountNumber] = useState<string>('');
   const [bankName, setBankName] = useState<string>('');
   const [accountName, setAccountName] = useState<string>('');
+  const [recommitSelected, setRecommitSelected] = useState(true);
   const { user } = useAuth();
   
   const handleWithdraw = () => {
@@ -26,8 +29,16 @@ export function WithdrawalOptions() {
       toast.error('Insufficient funds in your wallet');
       return;
     }
+
+    // Calculate recommitment amount (50% of withdrawal)
+    const withdrawalAmount = parseFloat(amount);
+    const recommitAmount = recommitSelected ? withdrawalAmount * 0.5 : 0;
+    const actualWithdrawalAmount = withdrawalAmount - recommitAmount;
     
-    toast.success(`Withdrawal of $${amount} initiated successfully!`);
+    toast.success(`Withdrawal of $${actualWithdrawalAmount.toFixed(2)} initiated successfully!${
+      recommitSelected ? ` $${recommitAmount.toFixed(2)} has been recommitted for the next investment cycle.` : ''
+    }`);
+    
     setAmount('');
   };
   
@@ -62,6 +73,39 @@ export function WithdrawalOptions() {
                 onChange={(e) => setAmount(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">Available balance: ${user?.walletBalance.toFixed(2) || '0.00'}</p>
+            </div>
+            
+            <div className="flex items-center space-x-2 mb-3">
+              <Checkbox 
+                id="recommit" 
+                checked={recommitSelected} 
+                onCheckedChange={(checked) => setRecommitSelected(checked === true)}
+              />
+              <Label htmlFor="recommit" className="text-sm">
+                Recommit 50% of withdrawal for next investment cycle
+              </Label>
+            </div>
+
+            <div className="p-4 my-3 bg-muted rounded-lg">
+              <p className="text-xs font-medium mb-1">Withdrawal Summary:</p>
+              {amount && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>Total amount:</span>
+                    <span>${parseFloat(amount || '0').toFixed(2)}</span>
+                  </div>
+                  {recommitSelected && (
+                    <div className="flex justify-between text-sm">
+                      <span>Amount recommitted (50%):</span>
+                      <span>${(parseFloat(amount || '0') * 0.5).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm font-medium border-t pt-1 mt-1">
+                    <span>Actual withdrawal:</span>
+                    <span>${(parseFloat(amount || '0') * (recommitSelected ? 0.5 : 1)).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="grid gap-2">
@@ -115,6 +159,39 @@ export function WithdrawalOptions() {
                 onChange={(e) => setAmount(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">Available balance: ${user?.walletBalance.toFixed(2) || '0.00'}</p>
+            </div>
+            
+            <div className="flex items-center space-x-2 mb-3">
+              <Checkbox 
+                id="recommit-crypto" 
+                checked={recommitSelected} 
+                onCheckedChange={(checked) => setRecommitSelected(checked === true)}
+              />
+              <Label htmlFor="recommit-crypto" className="text-sm">
+                Recommit 50% of withdrawal for next investment cycle
+              </Label>
+            </div>
+
+            <div className="p-4 my-3 bg-muted rounded-lg">
+              <p className="text-xs font-medium mb-1">Withdrawal Summary:</p>
+              {amount && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>Total amount:</span>
+                    <span>${parseFloat(amount || '0').toFixed(2)}</span>
+                  </div>
+                  {recommitSelected && (
+                    <div className="flex justify-between text-sm">
+                      <span>Amount recommitted (50%):</span>
+                      <span>${(parseFloat(amount || '0') * 0.5).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm font-medium border-t pt-1 mt-1">
+                    <span>Actual withdrawal:</span>
+                    <span>${(parseFloat(amount || '0') * (recommitSelected ? 0.5 : 1)).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="grid gap-2">

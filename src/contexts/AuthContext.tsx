@@ -1,28 +1,26 @@
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { toast } from '@/components/ui/sonner';
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate, useLocation } from 'react-router-dom';
 
-type User = {
+type UserType = {
   id: string;
   name: string;
   email: string;
-  avatar?: string;
   walletBalance: number;
+  avatar?: string;
   kycVerified: boolean;
-  emailVerified: boolean;
+  country?: string;
+  currency?: string;
+  currencySymbol?: string;
 };
 
 type AuthContextType = {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
+  user: UserType | null;
+  loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-  sendEmailVerification: (email: string) => Promise<void>;
-  verifyEmail: (token: string) => Promise<boolean>;
-  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  updateUserProfile?: (updates: Partial<UserType>) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,176 +38,109 @@ type AuthProviderProps = {
 };
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<UserType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Check if user is stored in localStorage
+    // Check if user is already logged in via localStorage
     const storedUser = localStorage.getItem('axiomify_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
-    setIsLoading(false);
+    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    // Mock authentication - in real app this would be an API call
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setLoading(true);
+      // Mock authentication delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // In a real app, you would validate credentials against the backend
+      // For this demo, we'll use a dummy user if email includes "admin"
+      const isAdmin = email.includes('admin');
+
+      // Create a mock user based on the input
+      const mockUser: UserType = {
+        id: '123456',
+        name: email.split('@')[0],
+        email,
+        walletBalance: isAdmin ? 10000 : 1000,
+        kycVerified: isAdmin,
+        avatar: undefined,
+        country: 'US',
+        currency: 'USD',
+        currencySymbol: '$'
+      };
+
+      // Store user in localStorage for persistence
+      localStorage.setItem('axiomify_user', JSON.stringify(mockUser));
+      setUser(mockUser);
       
-      // Mock validation
-      if (email === 'demo@axiomify.com' && password === 'password') {
-        const mockUser: User = {
-          id: '1',
-          name: 'Demo User',
-          email: 'demo@axiomify.com',
-          walletBalance: 1200.50,
-          kycVerified: true,
-          emailVerified: true,
-          avatar: 'https://i.pravatar.cc/150?u=demo@axiomify.com'
-        };
-        
-        setUser(mockUser);
-        localStorage.setItem('axiomify_user', JSON.stringify(mockUser));
-        toast.success('Welcome back!');
+      // Redirect to dashboard or admin
+      if (isAdmin) {
+        navigate('/admin/dashboard');
       } else {
-        toast.error('Invalid credentials. Try demo@axiomify.com / password');
+        navigate('/dashboard');
       }
     } catch (error) {
-      toast.error('Login failed. Please try again.');
-      console.error(error);
+      console.error('Login error:', error);
+      throw error;
     } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const sendEmailVerification = async (email: string) => {
-    try {
-      // In a real app this would call your Supabase Edge Function
-      await fetch('https://vyensygnzdllcwyzuxkq.supabase.co/functions/v1/verify-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZW5zeWduemRsbGN3eXp1eGtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4MzI1NTksImV4cCI6MjA2MzQwODU1OX0.pcfG8-ggEjuGhvB1VtxUORKPB4cTWLsFM_ZFCxvWE_g`
-        },
-        body: JSON.stringify({ email })
-      });
-      
-      toast.success('Verification email sent! Please check your inbox.');
-    } catch (error) {
-      console.error('Error sending verification email:', error);
-      toast.error('Failed to send verification email. Please try again.');
-    }
-  };
-
-  const verifyEmail = async (token: string): Promise<boolean> => {
-    try {
-      // In a real app this would call your Supabase Edge Function
-      const response = await fetch('https://vyensygnzdllcwyzuxkq.supabase.co/functions/v1/confirm-verification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZW5zeWduemRsbGN3eXp1eGtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4MzI1NTksImV4cCI6MjA2MzQwODU1OX0.pcfG8-ggEjuGhvB1VtxUORKPB4cTWLsFM_ZFCxvWE_g`
-        },
-        body: JSON.stringify({ token })
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        toast.success('Email verified successfully!');
-        
-        // Update user if they are logged in
-        if (user) {
-          const updatedUser = {...user, emailVerified: true};
-          setUser(updatedUser);
-          localStorage.setItem('axiomify_user', JSON.stringify(updatedUser));
-        }
-        
-        return true;
-      } else {
-        toast.error('Failed to verify email. Token may be invalid or expired.');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error verifying email:', error);
-      toast.error('Failed to verify email. Please try again.');
-      return false;
+      setLoading(false);
     }
   };
 
   const signup = async (name: string, email: string, password: string) => {
-    setIsLoading(true);
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock signup
-      const mockUser: User = {
-        id: Date.now().toString(),
+      setLoading(true);
+      // Mock signup delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Create a mock user based on the input
+      const mockUser: UserType = {
+        id: 'user-' + Date.now(),
         name,
         email,
         walletBalance: 0,
         kycVerified: false,
-        emailVerified: false,
+        avatar: undefined,
+        country: 'US',
+        currency: 'USD',
+        currencySymbol: '$'
       };
-      
-      setUser(mockUser);
-      localStorage.setItem('axiomify_user', JSON.stringify(mockUser));
-      
-      // Send verification email
-      await sendEmailVerification(email);
-      
-      toast.success('Account created successfully! Please verify your email.');
-    } catch (error) {
-      toast.error('Signup failed. Please try again.');
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const updatePassword = async (currentPassword: string, newPassword: string) => {
-    try {
-      // In a real app this would call your Supabase auth API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock password change - in a real app, this would validate the current password
-      // and update to the new one
-      if (currentPassword === 'password') {
-        toast.success('Password updated successfully');
-      } else {
-        toast.error('Current password is incorrect');
-        throw new Error('Current password is incorrect');
-      }
+      // Store user in localStorage for persistence
+      localStorage.setItem('axiomify_user', JSON.stringify(mockUser));
+      setUser(mockUser);
+      navigate('/dashboard');
     } catch (error) {
-      console.error('Error updating password:', error);
+      console.error('Signup error:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = () => {
     localStorage.removeItem('axiomify_user');
     setUser(null);
-    toast.info('You have been logged out.');
+    navigate('/');
+  };
+
+  // Function to update user profile
+  const updateUserProfile = (updates: Partial<UserType>) => {
+    if (!user) return;
+
+    const updatedUser = { ...user, ...updates };
+    localStorage.setItem('axiomify_user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        signup,
-        logout,
-        sendEmailVerification,
-        verifyEmail,
-        updatePassword
-      }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUserProfile }}>
       {children}
     </AuthContext.Provider>
   );

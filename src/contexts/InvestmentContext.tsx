@@ -20,6 +20,7 @@ export type Investment = {
   endTime: Date;
   createdAt: Date;
   status: 'active' | 'funded' | 'completed' | 'failed';
+  country?: string; // Added country field for matching
 };
 
 export type UserInvestment = {
@@ -31,6 +32,7 @@ export type UserInvestment = {
   status: 'active' | 'completed' | 'failed';
   endDate: Date;
   investmentTitle: string;
+  lastInvestmentTime?: Date; // Track last investment time for 72-hour cycle
 };
 
 type InvestmentContextType = {
@@ -39,6 +41,8 @@ type InvestmentContextType = {
   invest: (investmentId: string, amount: number) => Promise<void>;
   withdraw: (userInvestmentId: string) => Promise<void>;
   reinvest: (userInvestmentId: string) => Promise<void>;
+  getUserReferralLink: (userId: string) => string;
+  checkInvestmentEligibility: () => { eligible: boolean; timeRemaining?: number };
 };
 
 const InvestmentContext = createContext<InvestmentContextType | undefined>(undefined);
@@ -74,6 +78,7 @@ const mockInvestments: Investment[] = [
     endTime: new Date(Date.now() + 1000 * 60 * 60 * 72), // 72 hours from now
     createdAt: new Date(),
     status: 'active',
+    country: 'United States',
   },
   {
     id: '2',
@@ -92,6 +97,7 @@ const mockInvestments: Investment[] = [
     endTime: new Date(Date.now() + 1000 * 60 * 60 * 72), // 72 hours from now
     createdAt: new Date(),
     status: 'active',
+    country: 'Canada',
   },
   {
     id: '3',
@@ -110,6 +116,7 @@ const mockInvestments: Investment[] = [
     endTime: new Date(Date.now() + 1000 * 60 * 60 * 72), // 72 hours from now
     createdAt: new Date(),
     status: 'active',
+    country: 'United Kingdom',
   },
   {
     id: '4',
@@ -128,6 +135,7 @@ const mockInvestments: Investment[] = [
     endTime: new Date(Date.now() + 1000 * 60 * 60 * 72), // 72 hours from now
     createdAt: new Date(),
     status: 'active',
+    country: 'Australia',
   }
 ];
 
@@ -136,6 +144,41 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
   const [userInvestments, setUserInvestments] = useState<UserInvestment[]>([]);
   const { user } = useAuth();
 
+  // Function to get user referral link
+  const getUserReferralLink = (userId: string) => {
+    return `https://axiomify.com/ref/${userId}`;
+  };
+
+  // Check if user is eligible to invest (72-hour cycle)
+  const checkInvestmentEligibility = () => {
+    if (!user || userInvestments.length === 0) {
+      return { eligible: true };
+    }
+
+    // Find the most recent investment
+    const lastInvestment = [...userInvestments]
+      .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+    
+    if (!lastInvestment) {
+      return { eligible: true };
+    }
+
+    const lastInvestmentTime = lastInvestment.date.getTime();
+    const currentTime = Date.now();
+    const timeDifference = currentTime - lastInvestmentTime;
+    const hoursDifference = timeDifference / (1000 * 60 * 60);
+
+    if (hoursDifference < 72) {
+      const timeRemaining = 72 - hoursDifference;
+      return { 
+        eligible: false, 
+        timeRemaining: Math.ceil(timeRemaining)
+      };
+    }
+
+    return { eligible: true };
+  };
+
   const invest = async (investmentId: string, amount: number) => {
     if (!user) {
       toast.error('Please login to invest');
@@ -143,6 +186,13 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
     }
 
     try {
+      // Check investment eligibility (72-hour cycle)
+      const eligibility = checkInvestmentEligibility();
+      if (!eligibility.eligible) {
+        toast.error(`You can only invest once every 72 hours. Please wait ${eligibility.timeRemaining} more hours.`);
+        return;
+      }
+
       // Mock API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -163,6 +213,12 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
         return;
       }
 
+      // Match country if possible
+      const countryMatched = investment.country === user.country;
+      if (countryMatched) {
+        toast.success('You have been matched with investors from your country!');
+      }
+
       // Calculate expected return
       const expectedReturn = amount + (amount * (investment.returnRate / 100));
       
@@ -175,7 +231,8 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
         date: new Date(),
         status: 'active',
         endDate: new Date(Date.now() + investment.duration * 60 * 60 * 1000),
-        investmentTitle: investment.title
+        investmentTitle: investment.title,
+        lastInvestmentTime: new Date()
       };
       
       setUserInvestments(prev => [...prev, userInvestment]);
@@ -245,16 +302,24 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
         return;
       }
 
+      // Check investment eligibility (72-hour cycle)
+      const eligibility = checkInvestmentEligibility();
+      if (!eligibility.eligible) {
+        toast.error(`You can only invest once every 72 hours. Please wait ${eligibility.timeRemaining} more hours.`);
+        return;
+      }
+
       // Create a new investment with the returned amount
       const newUserInvestment: UserInvestment = {
         id: `ui-${Date.now()}`,
         investmentId: investmentToReinvest.investmentId,
         amount: investmentToReinvest.expectedReturn,
-        expectedReturn: investmentToReinvest.expectedReturn + (investmentToReinvest.expectedReturn * 0.15), // Assuming 15% return
+        expectedReturn: investmentToReinvest.expectedReturn + (investmentToReinvest.expectedReturn * 1), // 100% return
         date: new Date(),
         status: 'active',
         endDate: new Date(Date.now() + 72 * 60 * 60 * 1000), // 72 hours from now
-        investmentTitle: investmentToReinvest.investmentTitle
+        investmentTitle: investmentToReinvest.investmentTitle,
+        lastInvestmentTime: new Date()
       };
       
       // Update the original investment to completed status
@@ -282,6 +347,8 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
         invest,
         withdraw,
         reinvest,
+        getUserReferralLink,
+        checkInvestmentEligibility
       }}
     >
       {children}

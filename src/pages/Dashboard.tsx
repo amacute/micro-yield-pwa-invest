@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useInvestment } from '@/contexts/InvestmentContext';
 import { InvestmentCard } from '@/components/investments/InvestmentCard';
 import { Link } from 'react-router-dom';
+import { MessageBanner } from '@/components/dashboard/MessageBanner';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -18,12 +19,33 @@ export default function Dashboard() {
   // Get active user investments
   const activeInvestments = userInvestments.filter(inv => inv.status === 'active');
   
+  // Mock admin messages that would come from the backend in a real app
+  const adminMessages = [
+    {
+      id: 1,
+      title: 'New Investment Opportunity',
+      content: 'Don\'t miss our latest high return investment opportunity with 100% returns in 72 hours!',
+      type: 'announcement' as const,
+      date: '2023-05-23'
+    },
+    {
+      id: 2,
+      title: 'Complete Your Verification',
+      content: 'Please complete your verification to unlock all platform features and increased investment limits.',
+      type: 'important' as const,
+      date: '2023-05-22'
+    }
+  ];
+  
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Welcome, {user?.name}</h1>
         <p className="text-muted-foreground">Here's an overview of your investments</p>
       </div>
+      
+      {/* Admin Messages Banner */}
+      <MessageBanner messages={adminMessages} />
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatsCard 
@@ -111,9 +133,16 @@ export default function Dashboard() {
           </div>
           <h3 className="text-xl font-medium mb-2">Refer a Friend</h3>
           <p className="text-muted-foreground mb-4">
-            Earn $25 for each friend who signs up and makes their first investment
+            Earn 15% for each friend who signs up and makes their first investment
           </p>
-          <Button>Invite Friends</Button>
+          <Button onClick={() => {
+            const user = JSON.parse(localStorage.getItem('axiomify_user') || '{}');
+            const referralLink = `https://axiomify.com/ref/${user?.id || 'unknown'}`;
+            navigator.clipboard.writeText(referralLink);
+            toast.success('Referral link copied to clipboard!');
+          }}>
+            Copy Referral Link
+          </Button>
         </CardContent>
       </Card>
     </div>

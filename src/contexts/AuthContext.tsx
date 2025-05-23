@@ -22,6 +22,7 @@ type AuthContextType = {
   logout: () => void;
   sendEmailVerification: (email: string) => Promise<void>;
   verifyEmail: (token: string) => Promise<boolean>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -170,6 +171,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const updatePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      // In a real app this would call your Supabase auth API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock password change - in a real app, this would validate the current password
+      // and update to the new one
+      if (currentPassword === 'password') {
+        toast.success('Password updated successfully');
+      } else {
+        toast.error('Current password is incorrect');
+        throw new Error('Current password is incorrect');
+      }
+    } catch (error) {
+      console.error('Error updating password:', error);
+      throw error;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('axiomify_user');
     setUser(null);
@@ -186,7 +206,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         signup,
         logout,
         sendEmailVerification,
-        verifyEmail
+        verifyEmail,
+        updatePassword
       }}
     >
       {children}

@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, Users, Clock, TrendingUp, AlertTriangle } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { Loader } from '@/components/common/Loader';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function InvestmentDetails() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,7 @@ export default function InvestmentDetails() {
   
   const [investmentAmount, setInvestmentAmount] = useState(0);
   const [isInvesting, setIsInvesting] = useState(false);
+  const [showDepositDialog, setShowDepositDialog] = useState(false);
   
   // Find the investment based on the ID from the URL
   const investment = availableInvestments.find((inv) => inv.id === id);
@@ -59,7 +61,7 @@ export default function InvestmentDetails() {
     }
     
     if (investmentAmount > user.walletBalance) {
-      toast.error('Insufficient funds in your wallet');
+      setShowDepositDialog(true);
       return;
     }
     
@@ -235,6 +237,29 @@ export default function InvestmentDetails() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Insufficient Funds Dialog */}
+      <Dialog open={showDepositDialog} onOpenChange={setShowDepositDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Insufficient Funds</DialogTitle>
+            <DialogDescription>
+              You don't have enough funds in your wallet to make this investment.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col space-y-3 mt-4">
+            <Button onClick={() => { 
+              setShowDepositDialog(false);
+              navigate('/wallet');
+            }}>
+              Deposit Funds
+            </Button>
+            <Button variant="outline" onClick={() => setShowDepositDialog(false)}>
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

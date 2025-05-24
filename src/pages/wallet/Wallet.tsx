@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { P2PPayment } from '@/components/wallet/P2PPayment';
 import { VerificationForm } from '@/components/verification/VerificationForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowDown, ArrowUp, Clock, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Wallet() {
   const { user } = useAuth();
@@ -17,6 +16,34 @@ export default function Wallet() {
   const [showWithdrawal, setShowWithdrawal] = useState(false);
   const [showP2P, setShowP2P] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
+
+  // Handle hash-based navigation
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      resetViews();
+      
+      switch (hash) {
+        case 'deposit':
+          setShowDeposit(true);
+          break;
+        case 'withdraw':
+          setShowWithdrawal(true);
+          break;
+        case 'p2p':
+          setShowP2P(true);
+          break;
+        case 'verification':
+          setShowVerification(true);
+          break;
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    handleHashChange(); // Check initial hash
+
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Mock transaction data
   const transactions = [
@@ -84,6 +111,11 @@ export default function Wallet() {
     setShowVerification(false);
   };
   
+  const handleBackClick = () => {
+    window.location.hash = '';
+    resetViews();
+  };
+  
   return (
     <div className="space-y-6">
       <div>
@@ -97,40 +129,28 @@ export default function Wallet() {
         <Button 
           variant="outline" 
           className="flex-1"
-          onClick={() => {
-            resetViews();
-            setShowDeposit(true);
-          }}
+          onClick={() => window.location.hash = 'deposit'}
         >
           Deposit Funds
         </Button>
         <Button 
           variant="outline" 
           className="flex-1"
-          onClick={() => {
-            resetViews();
-            setShowWithdrawal(true);
-          }}
+          onClick={() => window.location.hash = 'withdraw'}
         >
           Withdraw Funds
         </Button>
         <Button 
           variant="outline" 
           className="flex-1"
-          onClick={() => {
-            resetViews();
-            setShowP2P(true);
-          }}
+          onClick={() => window.location.hash = 'p2p'}
         >
           P2P Payment
         </Button>
         <Button 
           variant="outline" 
           className="flex-1"
-          onClick={() => {
-            resetViews();
-            setShowVerification(true);
-          }}
+          onClick={() => window.location.hash = 'verification'}
         >
           Verification
         </Button>
@@ -141,7 +161,7 @@ export default function Wallet() {
           <Button 
             variant="ghost" 
             className="mb-4"
-            onClick={() => resetViews()}
+            onClick={handleBackClick}
           >
             ← Back to Transactions
           </Button>
@@ -181,7 +201,7 @@ export default function Wallet() {
                         <span className={`font-medium ${
                           transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {transaction.amount > 0 ? '+' : ''}{transaction.amount.toFixed(2)}
+                          {transaction.amount > 0 ? '+' : ''}{user?.currencySymbol}{Math.abs(transaction.amount).toFixed(2)}
                         </span>
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>

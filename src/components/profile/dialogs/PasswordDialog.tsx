@@ -32,6 +32,11 @@ export function PasswordDialog({ open, onOpenChange }: PasswordDialogProps) {
       toast.error('Password must be at least 8 characters long');
       return;
     }
+
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+      toast.error('Password must contain at least one uppercase letter, one lowercase letter, and one number');
+      return;
+    }
     
     setIsChangingPassword(true);
     try {
@@ -43,7 +48,7 @@ export function PasswordDialog({ open, onOpenChange }: PasswordDialogProps) {
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
-      toast.error('Failed to change password. Please make sure your current password is correct.');
+      toast.error('Failed to change password. Please check your current password.');
       console.error(error);
     } finally {
       setIsChangingPassword(false);
@@ -56,7 +61,7 @@ export function PasswordDialog({ open, onOpenChange }: PasswordDialogProps) {
         <DialogHeader>
           <DialogTitle>Change Password</DialogTitle>
           <DialogDescription>
-            Enter your current password and a new password.
+            Enter your current password and a new secure password.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -67,6 +72,7 @@ export function PasswordDialog({ open, onOpenChange }: PasswordDialogProps) {
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
             />
           </div>
           <div className="grid gap-2">
@@ -76,7 +82,11 @@ export function PasswordDialog({ open, onOpenChange }: PasswordDialogProps) {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
             />
+            <p className="text-xs text-muted-foreground">
+              Must be at least 8 characters with uppercase, lowercase, and number
+            </p>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="confirm-password">Confirm New Password</Label>
@@ -85,16 +95,24 @@ export function PasswordDialog({ open, onOpenChange }: PasswordDialogProps) {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
             />
           </div>
         </div>
         <DialogFooter>
           <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isChangingPassword}
+          >
+            Cancel
+          </Button>
+          <Button 
             type="submit" 
             onClick={handlePasswordChange}
             disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
           >
-            {isChangingPassword ? 'Saving...' : 'Save Changes'}
+            {isChangingPassword ? 'Saving...' : 'Change Password'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -12,20 +12,33 @@ type UserType = {
   country?: string;
   currency?: string;
   currencySymbol?: string;
+  lastDepositTime?: string;
+  twoFactorEnabled?: boolean;
+  sessions?: Array<{
+    id: string;
+    device: string;
+    location: string;
+    lastActive: string;
+  }>;
 };
 
 type AuthContextType = {
   user: UserType | null;
   loading: boolean;
-  isLoading: boolean; // Added for compatibility
-  isAuthenticated: boolean; // Added missing property
+  isLoading: boolean;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   updateUserProfile?: (updates: Partial<UserType>) => void;
-  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>; // Added missing property
-  verifyEmail: (token: string) => Promise<boolean>; // Added missing property
-  sendEmailVerification: (email: string) => Promise<void>; // Added missing property
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  verifyEmail: (token: string) => Promise<boolean>;
+  sendEmailVerification: (email: string) => Promise<void>;
+  updateCurrency: (currency: string, symbol: string) => void;
+  enableTwoFactor: (code: string) => Promise<boolean>;
+  disableTwoFactor: (code: string) => Promise<boolean>;
+  getSessions: () => Array<any>;
+  terminateSession: (sessionId: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,11 +61,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Derived state
   const isAuthenticated = user !== null;
 
   useEffect(() => {
-    // Check if user is already logged in via localStorage
     const storedUser = localStorage.getItem('axiomify_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -63,30 +74,32 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      // Real authentication would happen here with backend API
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Check if admin user
       const isAdmin = email.includes('admin');
 
-      // Create user based on authentication
       const authenticatedUser: UserType = {
         id: 'user-' + Date.now(),
         name: email.split('@')[0],
         email,
-        walletBalance: isAdmin ? 10000 : 1000,
-        kycVerified: isAdmin,
+        walletBalance: 0,
+        kycVerified: false,
         avatar: undefined,
         country: 'US',
         currency: 'USD',
-        currencySymbol: '$'
+        currencySymbol: '$',
+        twoFactorEnabled: false,
+        sessions: [{
+          id: 'session-' + Date.now(),
+          device: 'Current Device',
+          location: 'Washington, DC',
+          lastActive: new Date().toISOString()
+        }]
       };
 
-      // Store user in localStorage for persistence
       localStorage.setItem('axiomify_user', JSON.stringify(authenticatedUser));
       setUser(authenticatedUser);
       
-      // Redirect to appropriate dashboard
       if (isAdmin) {
         navigate('/admin/dashboard');
       } else {
@@ -103,10 +116,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signup = async (name: string, email: string, password: string) => {
     try {
       setLoading(true);
-      // Real signup would happen here with backend API
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Create new user
       const newUser: UserType = {
         id: 'user-' + Date.now(),
         name,
@@ -116,10 +127,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         avatar: undefined,
         country: 'US',
         currency: 'USD',
-        currencySymbol: '$'
+        currencySymbol: '$',
+        twoFactorEnabled: false,
+        sessions: [{
+          id: 'session-' + Date.now(),
+          device: 'Current Device',
+          location: 'Washington, DC',
+          lastActive: new Date().toISOString()
+        }]
       };
 
-      // Store user in localStorage for persistence
       localStorage.setItem('axiomify_user', JSON.stringify(newUser));
       setUser(newUser);
       navigate('/dashboard');
@@ -137,7 +154,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     navigate('/');
   };
 
-  // Function to update user profile
   const updateUserProfile = (updates: Partial<UserType>) => {
     if (!user) return;
 
@@ -146,31 +162,61 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUser(updatedUser);
   };
 
-  // Function to update password
   const updatePassword = async (currentPassword: string, newPassword: string) => {
-    // In a real app, this would verify the current password and update to the new one
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    // Mock success - in a real app we would verify the current password
     return Promise.resolve();
   };
 
-  // Function to verify email with token
   const verifyEmail = async (token: string): Promise<boolean> => {
-    // In a real app, this would verify the token with the backend
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    // For now, just return success if token exists
     return Promise.resolve(!!token);
   };
 
-  // Function to send verification email
   const sendEmailVerification = async (email: string) => {
-    // In a real app, this would trigger an email send via the backend
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    // Mock success
     return Promise.resolve();
+  };
+
+  const updateCurrency = (currency: string, symbol: string) => {
+    if (!user) return;
+    
+    const updatedUser = { 
+      ...user, 
+      currency, 
+      currencySymbol: symbol 
+    };
+    localStorage.setItem('axiomify_user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
+  const enableTwoFactor = async (code: string): Promise<boolean> => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (code.length === 6) {
+      updateUserProfile({ twoFactorEnabled: true });
+      return true;
+    }
+    return false;
+  };
+
+  const disableTwoFactor = async (code: string): Promise<boolean> => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (code.length === 6) {
+      updateUserProfile({ twoFactorEnabled: false });
+      return true;
+    }
+    return false;
+  };
+
+  const getSessions = () => {
+    return user?.sessions || [];
+  };
+
+  const terminateSession = async (sessionId: string) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    if (user?.sessions) {
+      const updatedSessions = user.sessions.filter(s => s.id !== sessionId);
+      updateUserProfile({ sessions: updatedSessions });
+    }
   };
 
   return (
@@ -185,7 +231,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       updateUserProfile,
       updatePassword,
       verifyEmail,
-      sendEmailVerification
+      sendEmailVerification,
+      updateCurrency,
+      enableTwoFactor,
+      disableTwoFactor,
+      getSessions,
+      terminateSession
     }}>
       {children}
     </AuthContext.Provider>

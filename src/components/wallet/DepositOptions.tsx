@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,8 +7,10 @@ import { toast } from '@/components/ui/sonner';
 import { CreditCard, Bitcoin, Copy, Upload, Check } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Loader } from '@/components/common/Loader';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function DepositOptions() {
+  const { user, updateUserProfile } = useAuth();
   const [amount, setAmount] = useState<string>('');
   const [selectedTab, setSelectedTab] = useState<string>('bank');
   const [isLoading, setIsLoading] = useState(false);
@@ -18,13 +19,15 @@ export function DepositOptions() {
   const [proofPreview, setProofPreview] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   
-  // Mock P2P details (in a real app, this would come from an API)
+  // Live P2P details with WhatsApp contact
   const p2pDetails = {
-    bankName: "First Bank",
-    accountNumber: "1234567890",
-    accountName: "Axiomify Ltd",
+    bankName: "JPMorgan Chase Bank",
+    accountNumber: "1234567890123",
+    accountName: "Axiomify Financial Ltd",
     cryptoAddress: "TL7yzxcbeu8fqLH2hWNVuD3S5J1YUZUJVW",
-    cryptoNetwork: "USDT (TRC-20)"
+    cryptoNetwork: "USDT (TRC-20)",
+    whatsappNumber: "+16463510973",
+    address: "1900 Connecticut Ave NW, Washington, DC 20009, United States"
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,8 +67,13 @@ export function DepositOptions() {
     
     setIsLoading(true);
     try {
-      // In a real app, you would upload the proof to your server
       await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Update user's last deposit time
+      if (updateUserProfile) {
+        updateUserProfile({ lastDepositTime: new Date().toISOString() });
+      }
+      
       setIsSubmitted(true);
       toast.success('Deposit request submitted successfully! Funds will be credited once confirmed.');
     } catch (error) {
@@ -84,11 +92,17 @@ export function DepositOptions() {
     setIsSubmitted(false);
   };
   
+  const handleWhatsAppContact = () => {
+    const message = `Hi, I'm contacting you regarding my deposit request for ${user?.currencySymbol}${amount}. Reference: ${referenceNumber}`;
+    const whatsappUrl = `https://wa.me/${p2pDetails.whatsappNumber.replace('+', '')}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+  
   return (
     <Card>
       <CardHeader>
         <CardTitle>Deposit Funds</CardTitle>
-        <CardDescription>Choose your preferred deposit method</CardDescription>
+        <CardDescription>Choose your preferred deposit method and contact support via WhatsApp: {p2pDetails.whatsappNumber}</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="bank" value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
@@ -148,6 +162,10 @@ export function DepositOptions() {
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
                     </div>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <Label>Bank Address</Label>
+                    <p className="text-sm text-muted-foreground">{p2pDetails.address}</p>
                   </div>
                 </div>
                 
@@ -216,6 +234,17 @@ export function DepositOptions() {
                       </>
                     )}
                   </Button>
+
+                  {amount && referenceNumber && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={handleWhatsAppContact}
+                    >
+                      Contact Support via WhatsApp
+                    </Button>
+                  )}
                 </form>
               </>
             ) : (

@@ -12,13 +12,16 @@ import { toast } from '@/components/ui/sonner';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { userInvestments, availableInvestments, getUserReferralLink } = useInvestment();
+  const { userInvestments, availableInvestments, getUserReferralLink, getReferralStats } = useInvestment();
   
   // Get featured investments (just showing a few)
   const featuredInvestments = availableInvestments.slice(0, 2);
   
   // Get active user investments
   const activeInvestments = userInvestments.filter(inv => inv.status === 'active');
+  
+  // Get referral stats
+  const referralStats = user ? getReferralStats(user.id) : { totalEarnings: 0, totalReferrals: 0 };
   
   // Mock admin messages that would come from the backend in a real app
   const adminMessages = [
@@ -58,10 +61,29 @@ export default function Dashboard() {
       {/* Admin Messages Banner */}
       <MessageBanner messages={adminMessages} />
       
+      {/* Hero Image Section */}
+      <Card className="relative overflow-hidden">
+        <CardContent className="p-0">
+          <div className="relative h-48 bg-gradient-to-r from-axiom-primary/20 to-axiom-secondary/20">
+            <img 
+              src="https://img.freepik.com/free-photo/standard-quality-control-collage-concept_23-2149595831.jpg?uid=R184108826&ga=GA1.1.1999243242.1748064813&semt=ais_hybrid&w=740"
+              alt="Investment Dashboard"
+              className="w-full h-full object-cover opacity-80"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center">
+              <div className="p-6 text-white">
+                <h2 className="text-3xl font-bold mb-2">Smart Investment Platform</h2>
+                <p className="text-lg opacity-90">Grow your wealth with secure P2P investments</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatsCard 
           title="Wallet Balance" 
-          value={`$${user?.walletBalance.toFixed(2) || '0.00'}`}
+          value={`${user?.currencySymbol || '$'}${user?.walletBalance.toFixed(2) || '0.00'}`}
           icon={<Wallet className="h-4 w-4 text-axiom-primary" />}
         />
         <StatsCard 
@@ -71,13 +93,13 @@ export default function Dashboard() {
         />
         <StatsCard 
           title="Total Returns" 
-          value="$350.75"
+          value={`${user?.currencySymbol || '$'}350.75`}
           change={{ value: "15%", positive: true }}
           icon={<TrendingUp className="h-4 w-4 text-axiom-primary" />}
         />
         <StatsCard 
-          title="Referrals" 
-          value="3"
+          title="Referral Earnings" 
+          value={`${user?.currencySymbol || '$'}${referralStats.totalEarnings.toFixed(2)}`}
           icon={<Users className="h-4 w-4 text-axiom-primary" />}
         />
       </div>
@@ -99,7 +121,7 @@ export default function Dashboard() {
                     <h3 className="font-medium">{investment.investmentTitle}</h3>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Investment Amount</span>
-                      <span className="font-medium">${investment.amount.toFixed(2)}</span>
+                      <span className="font-medium">{user?.currencySymbol || '$'}{investment.amount.toFixed(2)}</span>
                     </div>
                   </div>
                   
@@ -107,7 +129,7 @@ export default function Dashboard() {
                     <div className="bg-muted p-4 rounded-md grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs text-muted-foreground">Expected Return</p>
-                        <p className="font-medium text-green-600">${investment.expectedReturn.toFixed(2)}</p>
+                        <p className="font-medium text-green-600">{user?.currencySymbol || '$'}{investment.expectedReturn.toFixed(2)}</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Payout Date</p>
@@ -142,13 +164,18 @@ export default function Dashboard() {
           <div className="p-3 bg-axiom-primary/10 rounded-full mb-4">
             <Users className="h-6 w-6 text-axiom-primary" />
           </div>
-          <h3 className="text-xl font-medium mb-2">Refer a Friend</h3>
+          <h3 className="text-xl font-medium mb-2">Refer a Friend & Earn 5%</h3>
           <p className="text-muted-foreground mb-4">
-            Earn 5% for each friend who signs up and makes their first investment, plus 5% on recommitments
+            Earn 5% for each friend who signs up and makes their first investment, plus 5% on all their future investments
           </p>
-          <Button onClick={handleCopyReferralLink}>
-            Copy Referral Link
-          </Button>
+          <div className="flex flex-col gap-2 w-full max-w-md">
+            <div className="text-sm text-muted-foreground">
+              Your Referrals: {referralStats.totalReferrals} | Total Earnings: {user?.currencySymbol || '$'}{referralStats.totalEarnings.toFixed(2)}
+            </div>
+            <Button onClick={handleCopyReferralLink}>
+              Copy Referral Link
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

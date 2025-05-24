@@ -23,7 +23,7 @@ export function Logo({ size = 'medium', variant = 'default' }: LogoProps) {
   return (
     <div className="flex items-center gap-2">
       <img 
-        src="https://img.freepik.com/premium-vector/peer-peer-p2p-payment-online-model-support-transfer-money-peertopeer-technology-concept-mobile-phone-screen-closeup-smartphone-wireframe-hands-vector-illustration_127544-2563.jpg?uid=R184108826&ga=GA1.1.1999243242.1748064813&semt=ais_hybrid&w=740"
+        src="https://dynamic.design.com/asset/logo/363760fa-2cec-4be1-9b8c-8156ef28f3a9/logo-search-grid-1x?logoTemplateVersion=2&v=638639748142130000&text=axiomify"
         alt="Axiomify P2P Platform"
         className={`${getSize()} object-contain`}
       />

@@ -20,7 +20,7 @@ export type Investment = {
   endTime: Date;
   createdAt: Date;
   status: 'active' | 'funded' | 'completed' | 'failed';
-  country?: string; // Added country field for matching
+  country?: string;
 };
 
 export type UserInvestment = {
@@ -32,17 +32,33 @@ export type UserInvestment = {
   status: 'active' | 'completed' | 'failed';
   endDate: Date;
   investmentTitle: string;
-  lastInvestmentTime?: Date; // Track last investment time for 72-hour cycle
+  lastInvestmentTime?: Date;
+  referrerId?: string; // Track who referred this user for this investment
+};
+
+export type ReferralRecord = {
+  id: string;
+  referrerId: string;
+  refereeId: string;
+  investmentId: string;
+  investmentAmount: number;
+  commissionAmount: number;
+  commissionRate: number;
+  date: Date;
+  type: 'first_investment' | 'recommitment';
 };
 
 type InvestmentContextType = {
   availableInvestments: Investment[];
   userInvestments: UserInvestment[];
-  invest: (investmentId: string, amount: number) => Promise<void>;
+  referralRecords: ReferralRecord[];
+  invest: (investmentId: string, amount: number, referrerId?: string) => Promise<void>;
   withdraw: (userInvestmentId: string) => Promise<void>;
   reinvest: (userInvestmentId: string) => Promise<void>;
   getUserReferralLink: (userId: string) => string;
   checkInvestmentEligibility: () => { eligible: boolean; timeRemaining?: number };
+  getReferralStats: (userId: string) => { totalEarnings: number; totalReferrals: number };
+  getUserReferrals: (userId: string) => ReferralRecord[];
 };
 
 const InvestmentContext = createContext<InvestmentContextType | undefined>(undefined);
@@ -68,14 +84,14 @@ const mockInvestments: Investment[] = [
     amount: 0,
     minInvestment: 10,
     maxInvestment: 5000,
-    returnRate: 100, // Updated to 100% return
-    duration: 72, // 72 hours
+    returnRate: 100,
+    duration: 72,
     investors: 28,
     raised: 12560,
     goal: 25000,
     risk: 'Medium',
     category: 'Real Estate',
-    endTime: new Date(Date.now() + 1000 * 60 * 60 * 72), // 72 hours from now
+    endTime: new Date(Date.now() + 1000 * 60 * 60 * 72),
     createdAt: new Date(),
     status: 'active',
     country: 'United States',
@@ -142,11 +158,29 @@ const mockInvestments: Investment[] = [
 export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
   const [availableInvestments, setAvailableInvestments] = useState<Investment[]>(mockInvestments);
   const [userInvestments, setUserInvestments] = useState<UserInvestment[]>([]);
+  const [referralRecords, setReferralRecords] = useState<ReferralRecord[]>([]);
   const { user } = useAuth();
 
   // Function to get user referral link
   const getUserReferralLink = (userId: string) => {
-    return `https://axiomify.com/ref/${userId}`;
+    return `${window.location.origin}/signup?ref=${userId}`;
+  };
+
+  // Get referral statistics for a user
+  const getReferralStats = (userId: string) => {
+    const userReferrals = referralRecords.filter(record => record.referrerId === userId);
+    const totalEarnings = userReferrals.reduce((sum, record) => sum + record.commissionAmount, 0);
+    const uniqueReferees = new Set(userReferrals.map(record => record.refereeId));
+    
+    return {
+      totalEarnings,
+      totalReferrals: uniqueReferees.size
+    };
+  };
+
+  // Get all referrals made by a user
+  const getUserReferrals = (userId: string) => {
+    return referralRecords.filter(record => record.referrerId === userId);
   };
 
   // Check if user is eligible to invest (72-hour cycle)
@@ -155,7 +189,6 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
       return { eligible: true };
     }
 
-    // Find the most recent investment
     const lastInvestment = [...userInvestments]
       .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
     
@@ -179,7 +212,7 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
     return { eligible: true };
   };
 
-  const invest = async (investmentId: string, amount: number) => {
+  const invest = async (investmentId: string, amount: number, referrerId?: string) => {
     if (!user) {
       toast.error('Please login to invest');
       return;
@@ -204,7 +237,7 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
       }
       
       if (amount < investment.minInvestment || amount > investment.maxInvestment) {
-        toast.error(`Investment must be between $${investment.minInvestment} and $${investment.maxInvestment}`);
+        toast.error(`Investment must be between ${user?.currencySymbol || '$'}${investment.minInvestment} and ${user?.currencySymbol || '$'}${investment.maxInvestment}`);
         return;
       }
 
@@ -213,14 +246,11 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
         return;
       }
 
-      // Match country if possible
-      const countryMatched = investment.country === user.country;
-      if (countryMatched) {
-        toast.success('You have been matched with investors from your country!');
-      }
-
       // Calculate expected return
       const expectedReturn = amount + (amount * (investment.returnRate / 100));
+      
+      // Check if this is the user's first investment for referral tracking
+      const isFirstInvestment = userInvestments.length === 0;
       
       // Create user investment record
       const userInvestment: UserInvestment = {
@@ -232,10 +262,33 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
         status: 'active',
         endDate: new Date(Date.now() + investment.duration * 60 * 60 * 1000),
         investmentTitle: investment.title,
-        lastInvestmentTime: new Date()
+        lastInvestmentTime: new Date(),
+        referrerId: referrerId
       };
       
       setUserInvestments(prev => [...prev, userInvestment]);
+      
+      // Handle referral commission
+      if (referrerId && referrerId !== user.id) {
+        const commissionRate = 0.05; // 5% commission
+        const commissionAmount = amount * commissionRate;
+        
+        const referralRecord: ReferralRecord = {
+          id: `ref-${Date.now()}`,
+          referrerId,
+          refereeId: user.id,
+          investmentId,
+          investmentAmount: amount,
+          commissionAmount,
+          commissionRate,
+          date: new Date(),
+          type: isFirstInvestment ? 'first_investment' : 'recommitment'
+        };
+        
+        setReferralRecords(prev => [...prev, referralRecord]);
+        
+        toast.success(`Investment successful! Your referrer earned ${user?.currencySymbol || '$'}${commissionAmount.toFixed(2)} commission.`);
+      }
       
       // Update investment data
       const updatedInvestments = availableInvestments.map(inv => {
@@ -251,9 +304,7 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
       
       setAvailableInvestments(updatedInvestments);
       
-      // In a real app, we would update the user's wallet balance via an API
-      // For now we'll just show a success message
-      toast.success(`Successfully invested $${amount} in ${investment.title}`);
+      toast.success(`Successfully invested ${user?.currencySymbol || '$'}${amount} in ${investment.title}`);
     } catch (error) {
       toast.error('Failed to process investment. Please try again.');
       console.error(error);
@@ -262,10 +313,8 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
 
   const withdraw = async (userInvestmentId: string) => {
     try {
-      // Mock API delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Find the investment to withdraw
       const investmentToWithdraw = userInvestments.find(inv => inv.id === userInvestmentId);
       
       if (!investmentToWithdraw) {
@@ -273,7 +322,6 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
         return;
       }
       
-      // Update status to completed
       setUserInvestments(prev => 
         prev.map(inv => 
           inv.id === userInvestmentId 
@@ -282,7 +330,7 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
         )
       );
       
-      toast.success(`Successfully withdrawn $${investmentToWithdraw.expectedReturn.toFixed(2)} to your wallet`);
+      toast.success(`Successfully withdrawn ${user?.currencySymbol || '$'}${investmentToWithdraw.expectedReturn.toFixed(2)} to your wallet`);
     } catch (error) {
       toast.error('Failed to process withdrawal. Please try again.');
       console.error(error);
@@ -291,10 +339,8 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
 
   const reinvest = async (userInvestmentId: string) => {
     try {
-      // Mock API delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Find the completed investment to reinvest
       const investmentToReinvest = userInvestments.find(inv => inv.id === userInvestmentId);
       
       if (!investmentToReinvest) {
@@ -302,27 +348,45 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
         return;
       }
 
-      // Check investment eligibility (72-hour cycle)
       const eligibility = checkInvestmentEligibility();
       if (!eligibility.eligible) {
         toast.error(`You can only invest once every 72 hours. Please wait ${eligibility.timeRemaining} more hours.`);
         return;
       }
 
-      // Create a new investment with the returned amount
       const newUserInvestment: UserInvestment = {
         id: `ui-${Date.now()}`,
         investmentId: investmentToReinvest.investmentId,
         amount: investmentToReinvest.expectedReturn,
-        expectedReturn: investmentToReinvest.expectedReturn + (investmentToReinvest.expectedReturn * 1), // 100% return
+        expectedReturn: investmentToReinvest.expectedReturn + (investmentToReinvest.expectedReturn * 1),
         date: new Date(),
         status: 'active',
-        endDate: new Date(Date.now() + 72 * 60 * 60 * 1000), // 72 hours from now
+        endDate: new Date(Date.now() + 72 * 60 * 60 * 1000),
         investmentTitle: investmentToReinvest.investmentTitle,
-        lastInvestmentTime: new Date()
+        lastInvestmentTime: new Date(),
+        referrerId: investmentToReinvest.referrerId
       };
       
-      // Update the original investment to completed status
+      // Handle referral commission for recommitment
+      if (investmentToReinvest.referrerId && user) {
+        const commissionRate = 0.05; // 5% commission
+        const commissionAmount = investmentToReinvest.expectedReturn * commissionRate;
+        
+        const referralRecord: ReferralRecord = {
+          id: `ref-${Date.now()}`,
+          referrerId: investmentToReinvest.referrerId,
+          refereeId: user.id,
+          investmentId: investmentToReinvest.investmentId,
+          investmentAmount: investmentToReinvest.expectedReturn,
+          commissionAmount,
+          commissionRate,
+          date: new Date(),
+          type: 'recommitment'
+        };
+        
+        setReferralRecords(prev => [...prev, referralRecord]);
+      }
+      
       setUserInvestments(prev => [
         ...prev.map(inv => 
           inv.id === userInvestmentId 
@@ -332,7 +396,7 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
         newUserInvestment
       ]);
       
-      toast.success(`Successfully reinvested $${investmentToReinvest.expectedReturn.toFixed(2)}`);
+      toast.success(`Successfully reinvested ${user?.currencySymbol || '$'}${investmentToReinvest.expectedReturn.toFixed(2)}`);
     } catch (error) {
       toast.error('Failed to process reinvestment. Please try again.');
       console.error(error);
@@ -344,11 +408,14 @@ export const InvestmentProvider = ({ children }: InvestmentProviderProps) => {
       value={{
         availableInvestments,
         userInvestments,
+        referralRecords,
         invest,
         withdraw,
         reinvest,
         getUserReferralLink,
-        checkInvestmentEligibility
+        checkInvestmentEligibility,
+        getReferralStats,
+        getUserReferrals
       }}
     >
       {children}

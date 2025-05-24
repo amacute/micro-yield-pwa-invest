@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, LineChart, DollarSign, PieChart, MessageSquare } from 'lucide-react';
+import { Users, LineChart, DollarSign, PieChart, MessageSquare, ArrowRightLeft } from 'lucide-react';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { InvestmentManagement } from '@/components/admin/InvestmentManagement';
 import { P2PMatching } from '@/components/admin/P2PMatching';
@@ -9,6 +9,7 @@ import { DataAnalytics } from '@/components/admin/DataAnalytics';
 import { AdminStatsCard } from '@/components/admin/AdminStatsCard';
 import { AdminDashboardHeader } from '@/components/admin/AdminDashboardHeader';
 import { AdminMessaging } from '@/components/admin/AdminMessaging';
+import { UserMatching } from '@/components/admin/UserMatching';
 import { toast } from '@/components/ui/sonner';
 
 type AdminStat = {
@@ -88,11 +89,17 @@ export default function AdminDashboard() {
       </div>
       
       <Tabs defaultValue="analytics" className="space-y-4">
-        <TabsList className="grid grid-cols-5">
+        <TabsList className="grid grid-cols-6">
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="investments">Investments</TabsTrigger>
           <TabsTrigger value="p2p">P2P Matching</TabsTrigger>
+          <TabsTrigger value="user-matching">
+            <div className="flex items-center gap-1">
+              <ArrowRightLeft className="h-4 w-4" />
+              <span>User Matching</span>
+            </div>
+          </TabsTrigger>
           <TabsTrigger value="messaging">
             <div className="flex items-center gap-1">
               <MessageSquare className="h-4 w-4" />
@@ -115,6 +122,10 @@ export default function AdminDashboard() {
         
         <TabsContent value="p2p" className="space-y-4">
           <P2PMatching />
+        </TabsContent>
+        
+        <TabsContent value="user-matching" className="space-y-4">
+          <UserMatching />
         </TabsContent>
         
         <TabsContent value="messaging" className="space-y-4">

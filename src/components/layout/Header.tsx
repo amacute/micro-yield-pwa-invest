@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Logo } from '@/components/common/Logo';
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -24,8 +25,7 @@ export function Header() {
     <header className="bg-white dark:bg-axiom-dark border-b border-border sticky top-0 z-30">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-axiom-primary to-axiom-secondary flex items-center justify-center text-white font-bold">A</div>
-          <span className="text-xl font-bold text-axiom-dark dark:text-white">Axiomify</span>
+          <Logo size="small" />
         </Link>
 
         {/* Desktop menu */}
@@ -111,8 +111,7 @@ export function Header() {
           <div className="md:hidden absolute top-0 inset-x-0 z-50 bg-white dark:bg-axiom-dark p-4 h-screen">
             <div className="flex justify-between items-center mb-6">
               <Link to="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-axiom-primary to-axiom-secondary flex items-center justify-center text-white font-bold">A</div>
-                <span className="text-xl font-bold">Axiomify</span>
+                <Logo size="small" />
               </Link>
               <Button
                 variant="ghost"

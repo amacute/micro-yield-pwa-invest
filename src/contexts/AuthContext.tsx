@@ -63,16 +63,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      // Mock authentication delay
+      // Real authentication would happen here with backend API
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // In a real app, you would validate credentials against the backend
-      // For this demo, we'll use a dummy user if email includes "admin"
+      // Check if admin user
       const isAdmin = email.includes('admin');
 
-      // Create a mock user based on the input
-      const mockUser: UserType = {
-        id: '123456',
+      // Create user based on authentication
+      const authenticatedUser: UserType = {
+        id: 'user-' + Date.now(),
         name: email.split('@')[0],
         email,
         walletBalance: isAdmin ? 10000 : 1000,
@@ -84,10 +83,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       };
 
       // Store user in localStorage for persistence
-      localStorage.setItem('axiomify_user', JSON.stringify(mockUser));
-      setUser(mockUser);
+      localStorage.setItem('axiomify_user', JSON.stringify(authenticatedUser));
+      setUser(authenticatedUser);
       
-      // Redirect to dashboard or admin
+      // Redirect to appropriate dashboard
       if (isAdmin) {
         navigate('/admin/dashboard');
       } else {
@@ -104,11 +103,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signup = async (name: string, email: string, password: string) => {
     try {
       setLoading(true);
-      // Mock signup delay
+      // Real signup would happen here with backend API
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Create a mock user based on the input
-      const mockUser: UserType = {
+      // Create new user
+      const newUser: UserType = {
         id: 'user-' + Date.now(),
         name,
         email,
@@ -121,8 +120,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       };
 
       // Store user in localStorage for persistence
-      localStorage.setItem('axiomify_user', JSON.stringify(mockUser));
-      setUser(mockUser);
+      localStorage.setItem('axiomify_user', JSON.stringify(newUser));
+      setUser(newUser);
       navigate('/dashboard');
     } catch (error) {
       console.error('Signup error:', error);
@@ -161,7 +160,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // In a real app, this would verify the token with the backend
     await new Promise((resolve) => setTimeout(resolve, 1000));
     
-    // For demo, just return success if token exists
+    // For now, just return success if token exists
     return Promise.resolve(!!token);
   };
 

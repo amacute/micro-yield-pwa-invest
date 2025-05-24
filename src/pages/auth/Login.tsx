@@ -94,9 +94,6 @@ export default function Login() {
             </Link>
           </p>
           <div className="flex items-center justify-between w-full mt-4">
-            <p className="text-xs text-muted-foreground">
-              Demo credentials: demo@axiomify.com / password
-            </p>
             <Link to="/admin-auth" className="text-xs text-axiom-primary hover:underline">
               Admin Portal
             </Link>

@@ -102,6 +102,44 @@ export default function LandingPage() {
           </Link>
         </div>
       </section>
+
+      {/* Footer with Address */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <h3 className="text-xl font-bold mb-4">Axiomify</h3>
+              <p className="text-gray-300 mb-4">
+                Democratizing short-term investments through a transparent, decentralized P2P platform.
+              </p>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Contact Info</h4>
+              <p className="text-gray-300 mb-2">
+                1900 Connecticut Ave NW<br />
+                Washington, DC 20009<br />
+                United States
+              </p>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
+              <div className="space-y-2">
+                <Link to="/terms-and-conditions" className="text-gray-300 hover:text-white block">
+                  Terms & Conditions
+                </Link>
+                <Link to="/privacy-policy" className="text-gray-300 hover:text-white block">
+                  Privacy Policy
+                </Link>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-700 mt-8 pt-8 text-center">
+            <p className="text-gray-400">
+              © {new Date().getFullYear()} Axiomify. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

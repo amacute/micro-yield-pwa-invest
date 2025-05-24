@@ -20,19 +20,13 @@ export function Logo({ size = 'medium', variant = 'default' }: LogoProps) {
     }
   };
 
-  const getColor = () => {
-    return variant === 'white' ? 'text-white' : 'text-axiom-primary';
-  };
-
   return (
-    <div className={`flex items-center gap-2 ${getColor()}`}>
-      <div className="relative">
-        <div className="absolute inset-0 bg-axiom-primary/20 rounded-full blur-md"></div>
-        <div className={`${getSize()} aspect-square rounded-full bg-gradient-to-br from-axiom-primary to-axiom-secondary flex items-center justify-center`}>
-          <span className="font-bold text-white">A</span>
-        </div>
-      </div>
-      <span className="font-bold text-xl">Axiomify</span>
+    <div className="flex items-center gap-2">
+      <img 
+        src="https://dynamic.design.com/asset/logo/363760fa-2cec-4be1-9b8c-8156ef28f3a9/logo-search-grid-1x?logoTemplateVersion=2&v=638639748142130000&text=axiomify"
+        alt="Axiomify Logo"
+        className={`${getSize()} object-contain`}
+      />
     </div>
   );
 }

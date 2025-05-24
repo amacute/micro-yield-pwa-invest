@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { toast } from '@/components/ui/sonner';
 import { CreditCard, Bitcoin, AlertCircle, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CryptoOptions } from '@/components/ui/crypto-options';
+import { CryptoOptions } from '@/components/wallet/CryptoOptions';
 
 export function WithdrawalOptions() {
   const [amount, setAmount] = useState<string>('');

@@ -136,6 +136,15 @@ export default function Dashboard() {
                         <p className="font-medium">{investment.endDate.toLocaleDateString()}</p>
                       </div>
                     </div>
+                    
+                    {/* Recommit replaced with Deposit button */}
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.location.href = '/wallet#deposit'}
+                    >
+                      Deposit More Funds
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

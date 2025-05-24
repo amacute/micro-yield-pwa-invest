@@ -1,13 +1,13 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/sonner';
-import { CreditCard, Bitcoin, AlertCircle } from 'lucide-react';
+import { CreditCard, Bitcoin, AlertCircle, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CryptoOptions } from '@/components/ui/crypto-options';
 
 export function WithdrawalOptions() {
   const [amount, setAmount] = useState<string>('');
@@ -63,7 +63,7 @@ export function WithdrawalOptions() {
         )}
 
         <Tabs defaultValue="bank" className="space-y-4">
-          <TabsList className="grid grid-cols-2">
+          <TabsList className="grid grid-cols-3">
             <TabsTrigger value="bank">
               <CreditCard className="h-4 w-4 mr-2" />
               Bank Transfer
@@ -71,6 +71,10 @@ export function WithdrawalOptions() {
             <TabsTrigger value="crypto">
               <Bitcoin className="h-4 w-4 mr-2" />
               Cryptocurrency
+            </TabsTrigger>
+            <TabsTrigger value="confirm">
+              <Clock className="h-4 w-4 mr-2" />
+              Confirm Payment
             </TabsTrigger>
           </TabsList>
           
@@ -134,56 +138,20 @@ export function WithdrawalOptions() {
           </TabsContent>
           
           <TabsContent value="crypto" className="space-y-4">
-            <div className="grid gap-2">
-              <label className="text-sm font-medium" htmlFor="crypto-amount">Amount</label>
-              <Input 
-                id="crypto-amount" 
-                type="number" 
-                min="10" 
-                placeholder="Enter amount" 
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                disabled={!user?.lastDepositTime}
-              />
-              <p className="text-xs text-muted-foreground">
-                Available balance: {user?.currencySymbol}{user?.walletBalance.toFixed(2) || '0.00'}
+            <CryptoOptions type="withdrawal" />
+          </TabsContent>
+          
+          <TabsContent value="confirm" className="space-y-4">
+            <div className="text-center py-8">
+              <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="font-medium mb-2">Payment Confirmation</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Confirm when you have received your withdrawal payment
               </p>
+              <Button onClick={() => toast.success('Payment confirmed! Countdown started.')}>
+                Confirm Payment Received
+              </Button>
             </div>
-            
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Select Cryptocurrency</label>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" className="justify-start" disabled={!user?.lastDepositTime}>
-                  <Bitcoin className="h-4 w-4 mr-2" />
-                  Bitcoin (BTC)
-                </Button>
-                <Button variant="outline" className="justify-start" disabled={!user?.lastDepositTime}>
-                  <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24Z" fill="#627EEA"/>
-                  </svg>
-                  Ethereum (ETH)
-                </Button>
-              </div>
-            </div>
-            
-            <div className="grid gap-2">
-              <label className="text-sm font-medium" htmlFor="wallet-address">Wallet Address</label>
-              <Input 
-                id="wallet-address" 
-                placeholder="Enter your wallet address" 
-                value={withdrawalAddress}
-                onChange={(e) => setWithdrawalAddress(e.target.value)}
-                disabled={!user?.lastDepositTime}
-              />
-            </div>
-            
-            <Button 
-              className="w-full" 
-              onClick={handleWithdraw}
-              disabled={!amount || !withdrawalAddress || !user?.lastDepositTime}
-            >
-              Withdraw to Wallet
-            </Button>
           </TabsContent>
         </Tabs>
       </CardContent>

@@ -89,23 +89,15 @@ export default function AdminDashboard() {
       </div>
       
       <Tabs defaultValue="analytics" className="space-y-4">
-        <TabsList className="grid grid-cols-6">
+        <TabsList className="grid grid-cols-8">
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="investments">Investments</TabsTrigger>
           <TabsTrigger value="p2p">P2P Matching</TabsTrigger>
-          <TabsTrigger value="user-matching">
-            <div className="flex items-center gap-1">
-              <ArrowRightLeft className="h-4 w-4" />
-              <span>User Matching</span>
-            </div>
-          </TabsTrigger>
-          <TabsTrigger value="messaging">
-            <div className="flex items-center gap-1">
-              <MessageSquare className="h-4 w-4" />
-              <span>Messaging</span>
-            </div>
-          </TabsTrigger>
+          <TabsTrigger value="user-matching">User Matching</TabsTrigger>
+          <TabsTrigger value="messaging">Messaging</TabsTrigger>
+          <TabsTrigger value="expired">Expired</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
         
         <TabsContent value="analytics" className="space-y-4">
@@ -114,6 +106,7 @@ export default function AdminDashboard() {
         
         <TabsContent value="users" className="space-y-4">
           <UserManagement />
+          <UserBlockingManagement />
         </TabsContent>
         
         <TabsContent value="investments" className="space-y-4">
@@ -130,6 +123,14 @@ export default function AdminDashboard() {
         
         <TabsContent value="messaging" className="space-y-4">
           <AdminMessaging />
+        </TabsContent>
+        
+        <TabsContent value="expired" className="space-y-4">
+          <ExpiredInvestments />
+        </TabsContent>
+        
+        <TabsContent value="notifications" className="space-y-4">
+          <NotificationCenter />
         </TabsContent>
       </Tabs>
     </div>

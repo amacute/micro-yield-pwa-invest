@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +18,7 @@ interface CustomerCareChatProps {
 }
 
 const AI_API_KEY = '6d432c28038d77b50025adad10f0e824';
+const WHATSAPP_NUMBER = '+16463510973';
 
 export const CustomerCareChat = ({ className }: CustomerCareChatProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,6 +39,26 @@ export const CustomerCareChat = ({ className }: CustomerCareChatProps) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const sendToWhatsApp = async (message: string) => {
+    try {
+      // In a real implementation, this would send to WhatsApp Business API
+      await fetch('https://vyensygnzdllcwyzuxkq.supabase.co/functions/v1/whatsapp-webhook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5ZW5zeWduemRsbGN3eXp1eGtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4MzI1NTksImV4cCI6MjA2MzQwODU1OX0.pcfG8-ggEjuGhvB1VtxUORKPB4cTWLsFM_ZFCxvWE_g`
+        },
+        body: JSON.stringify({
+          message,
+          from: 'web_chat',
+          to: WHATSAPP_NUMBER
+        })
+      });
+    } catch (error) {
+      console.error('Error sending to WhatsApp:', error);
+    }
+  };
+
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
@@ -53,6 +73,10 @@ export const CustomerCareChat = ({ className }: CustomerCareChatProps) => {
     };
     
     setMessages(prev => [...prev, userMessage]);
+    
+    // Send to WhatsApp
+    await sendToWhatsApp(message);
+    
     setMessage('');
     
     // Simulate bot typing

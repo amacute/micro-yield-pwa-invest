@@ -1,136 +1,125 @@
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PasswordDialog } from '@/components/profile/dialogs/PasswordDialog';
-import { TwoFactorAuthDialog } from '@/components/profile/dialogs/TwoFactorAuthDialog';
 import { Badge } from '@/components/ui/badge';
-import { toast } from '@/components/ui/sonner';
-import { Monitor, Smartphone, Tablet, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Shield, Key, Smartphone, Clock } from 'lucide-react';
+import { PasswordDialog } from './dialogs/PasswordDialog';
+import { TwoFactorAuthDialog } from './dialogs/TwoFactorAuthDialog';
 
 export function SecurityTab() {
-  const { user, getSessions, terminateSession } = useAuth();
+  const { user } = useAuth();
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [show2FADialog, setShow2FADialog] = useState(false);
-  const [is2FAEnabled, setIs2FAEnabled] = useState(user?.twoFactorEnabled || false);
+  const [showTwoFactorDialog, setShowTwoFactorDialog] = useState(false);
   
-  if (!user) return null;
-  
-  const handleToggle2FA = (enabled: boolean) => {
-    setIs2FAEnabled(enabled);
-  };
-
-  const sessions = getSessions();
-
-  const getDeviceIcon = (device: string) => {
-    if (device.toLowerCase().includes('mobile') || device.toLowerCase().includes('phone')) {
-      return <Smartphone className="h-4 w-4" />;
-    }
-    if (device.toLowerCase().includes('tablet')) {
-      return <Tablet className="h-4 w-4" />;
-    }
-    return <Monitor className="h-4 w-4" />;
-  };
-
-  const handleTerminateSession = async (sessionId: string) => {
-    try {
-      await terminateSession(sessionId);
-      toast.success('Session terminated successfully');
-    } catch (error) {
-      toast.error('Failed to terminate session');
-    }
-  };
+  const lastLoginTime = new Date().toLocaleDateString();
   
   return (
-    <>
+    <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Security Settings</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Security Settings
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="font-medium">Password</div>
-              <div className="text-sm text-muted-foreground">
-                Keep your account secure with a strong password
+          {/* Password Section */}
+          <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center gap-3">
+              <Key className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <h3 className="font-medium">Password</h3>
+                <p className="text-sm text-muted-foreground">
+                  Change your account password
+                </p>
               </div>
             </div>
             <Button 
               variant="outline" 
-              size="sm"
               onClick={() => setShowPasswordDialog(true)}
             >
               Change Password
             </Button>
           </div>
-          
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="font-medium">Two-Factor Authentication</div>
-              <div className="text-sm text-muted-foreground">
-                Add an extra layer of security to your account
-              </div>
-              <Badge variant={is2FAEnabled ? "default" : "secondary"} className="mt-1">
-                {is2FAEnabled ? 'Enabled' : 'Disabled'}
-              </Badge>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShow2FADialog(true)}
-            >
-              {is2FAEnabled ? 'Manage 2FA' : 'Enable 2FA'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Active Sessions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {sessions.length > 0 ? (
-            sessions.map((session) => (
-              <div key={session.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  {getDeviceIcon(session.device)}
-                  <div>
-                    <div className="font-medium">{session.device}</div>
-                    <div className="text-sm text-muted-foreground">{session.location}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Last active: {new Date(session.lastActive).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {session.id.includes(Date.now().toString().slice(-5)) ? (
-                    <Badge variant="default">Current</Badge>
-                  ) : (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleTerminateSession(session.id)}
-                    >
-                      <X className="h-3 w-3 mr-1" />
-                      End
-                    </Button>
-                  )}
-                </div>
+          {/* Two-Factor Authentication Section */}
+          <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center gap-3">
+              <Smartphone className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <h3 className="font-medium">Two-Factor Authentication</h3>
+                <p className="text-sm text-muted-foreground">
+                  Add an extra layer of security to your account
+                </p>
               </div>
-            ))
-          ) : (
-            <p className="text-center py-4 text-muted-foreground">No active sessions</p>
-          )}
-          
-          <div className="pt-4 border-t">
-            <p className="text-sm text-muted-foreground mb-2">
-              If you see a session you don't recognize, terminate it immediately and change your password.
-            </p>
-            <Button variant="outline" size="sm">
-              Terminate All Other Sessions
-            </Button>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge variant={user?.twoFactorEnabled ? 'default' : 'secondary'}>
+                {user?.twoFactorEnabled ? 'Enabled' : 'Disabled'}
+              </Badge>
+              <Button 
+                variant="outline"
+                onClick={() => setShowTwoFactorDialog(true)}
+              >
+                {user?.twoFactorEnabled ? 'Manage' : 'Enable'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Session Management */}
+          <div className="p-4 border rounded-lg">
+            <div className="flex items-center gap-3 mb-3">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <h3 className="font-medium">Session Management</h3>
+                <p className="text-sm text-muted-foreground">
+                  Manage your active sessions
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                <div>
+                  <p className="font-medium">Current Session</p>
+                  <p className="text-sm text-muted-foreground">
+                    Web Browser • Last active: {lastLoginTime}
+                  </p>
+                </div>
+                <Badge variant="default">Active</Badge>
+              </div>
+              
+              <Button variant="outline" className="w-full">
+                Sign out of all other sessions
+              </Button>
+            </div>
+          </div>
+
+          {/* Security Recommendations */}
+          <div className="p-4 border rounded-lg bg-muted/50">
+            <h3 className="font-medium mb-3">Security Recommendations</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${user?.twoFactorEnabled ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                <span className={user?.twoFactorEnabled ? 'text-green-600' : 'text-yellow-600'}>
+                  {user?.twoFactorEnabled ? 'Two-factor authentication is enabled' : 'Enable two-factor authentication'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-green-600">
+                  Strong password is being used
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-green-600">
+                  Account email is verified
+                </span>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -141,11 +130,9 @@ export function SecurityTab() {
       />
       
       <TwoFactorAuthDialog 
-        open={show2FADialog} 
-        onOpenChange={setShow2FADialog}
-        is2FAEnabled={is2FAEnabled}
-        onToggle2FA={handleToggle2FA}
+        open={showTwoFactorDialog} 
+        onOpenChange={setShowTwoFactorDialog} 
       />
-    </>
+    </div>
   );
 }

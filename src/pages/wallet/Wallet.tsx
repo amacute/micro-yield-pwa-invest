@@ -131,7 +131,7 @@ export default function Wallet() {
           className="flex-1"
           onClick={() => window.location.hash = 'deposit'}
         >
-          Deposit Funds
+          Add Funds
         </Button>
         <Button 
           variant="outline" 
@@ -174,142 +174,7 @@ export default function Wallet() {
       )}
       
       {!showDeposit && !showWithdrawal && !showP2P && !showVerification && (
-        <Tabs defaultValue="all">
-          <TabsList className="grid grid-cols-4 mb-4">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="deposits">Deposits</TabsTrigger>
-            <TabsTrigger value="investments">Investments</TabsTrigger>
-            <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all">
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                {transactions.length > 0 ? (
-                  transactions.map(transaction => (
-                    <div key={transaction.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-muted rounded-full">
-                          {getTransactionIcon(transaction.type)}
-                        </div>
-                        <div>
-                          <p className="font-medium">{transaction.description}</p>
-                          <p className="text-sm text-muted-foreground">{formatDate(transaction.date)}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`font-medium ${
-                          transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {transaction.amount > 0 ? '+' : ''}{user?.currencySymbol}{Math.abs(transaction.amount).toFixed(2)}
-                        </span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-center py-8 text-muted-foreground">No transactions found</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="deposits">
-            <Card>
-              <CardContent className="p-6">
-                {transactions.filter(t => t.type === 'deposit').length > 0 ? (
-                  transactions
-                    .filter(t => t.type === 'deposit')
-                    .map(transaction => (
-                      <div key={transaction.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-muted rounded-full">
-                            {getTransactionIcon(transaction.type)}
-                          </div>
-                          <div>
-                            <p className="font-medium">{transaction.description}</p>
-                            <p className="text-sm text-muted-foreground">{formatDate(transaction.date)}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-green-600">
-                            +{transaction.amount.toFixed(2)}
-                          </span>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </div>
-                    ))
-                ) : (
-                  <p className="text-center py-8 text-muted-foreground">No deposits found</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="investments">
-            <Card>
-              <CardContent className="p-6">
-                {transactions.filter(t => t.type === 'investment').length > 0 ? (
-                  transactions
-                    .filter(t => t.type === 'investment')
-                    .map(transaction => (
-                      <div key={transaction.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-muted rounded-full">
-                            {getTransactionIcon(transaction.type)}
-                          </div>
-                          <div>
-                            <p className="font-medium">{transaction.description}</p>
-                            <p className="text-sm text-muted-foreground">{formatDate(transaction.date)}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-red-600">
-                            {transaction.amount.toFixed(2)}
-                          </span>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </div>
-                    ))
-                ) : (
-                  <p className="text-center py-8 text-muted-foreground">No investments found</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="withdrawals">
-            <Card>
-              <CardContent className="p-6">
-                {transactions.filter(t => t.type === 'withdrawal').length > 0 ? (
-                  transactions
-                    .filter(t => t.type === 'withdrawal')
-                    .map(transaction => (
-                      <div key={transaction.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-muted rounded-full">
-                            {getTransactionIcon(transaction.type)}
-                          </div>
-                          <div>
-                            <p className="font-medium">{transaction.description}</p>
-                            <p className="text-sm text-muted-foreground">{formatDate(transaction.date)}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-red-600">
-                            {transaction.amount.toFixed(2)}
-                          </span>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </div>
-                    ))
-                ) : (
-                  <p className="text-center py-8 text-muted-foreground">No withdrawals found</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <TransactionHistory />
       )}
     </div>
   );

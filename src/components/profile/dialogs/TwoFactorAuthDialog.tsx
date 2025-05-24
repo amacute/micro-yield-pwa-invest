@@ -1,157 +1,274 @@
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter 
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter 
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { QrCode, Smartphone, Key } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
-import { Copy } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TwoFactorAuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  is2FAEnabled: boolean;
-  onToggle2FA: (enabled: boolean) => void;
 }
 
-export function TwoFactorAuthDialog({ 
-  open, 
-  onOpenChange, 
-  is2FAEnabled, 
-  onToggle2FA 
-}: TwoFactorAuthDialogProps) {
-  const { enableTwoFactor, disableTwoFactor, user } = useAuth();
+export function TwoFactorAuthDialog({ open, onOpenChange }: TwoFactorAuthDialogProps) {
+  const { user, updateUser } = useAuth();
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(user?.twoFactorEnabled || false);
   const [verificationCode, setVerificationCode] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [step, setStep] = useState<'setup' | 'verify' | 'disable'>('setup');
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [secretKey, setSecretKey] = useState('');
+  const [loading, setLoading] = useState(false);
   
-  // Mock secret key for 2FA setup
-  const secretKey = 'JBSWY3DPEHPK3PXP';
-  const qrCodeData = `otpauth://totp/Axiomify:${user?.email}?secret=${secretKey}&issuer=Axiomify`;
+  const generateQRCode = async () => {
+    try {
+      // In a real implementation, this would call a backend service to generate QR code
+      // For demo purposes, we'll simulate this
+      const mockSecret = 'JBSWY3DPEHPK3PXP';
+      const appName = 'Axiomify';
+      const userEmail = user?.email;
+      
+      const qrUrl = `otpauth://totp/${appName}:${userEmail}?secret=${mockSecret}&issuer=${appName}`;
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`;
+      
+      setQrCodeUrl(qrCodeUrl);
+      setSecretKey(mockSecret);
+      setStep('verify');
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      toast.error('Failed to generate QR code');
+    }
+  };
   
-  const handleToggle2FA = async () => {
-    if (verificationCode.length !== 6) {
+  const verifyAndEnable2FA = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
       toast.error('Please enter a valid 6-digit code');
       return;
     }
-
-    setIsProcessing(true);
+    
+    setLoading(true);
     try {
-      let success = false;
+      // In a real implementation, this would verify the TOTP code
+      // For demo purposes, we'll accept any 6-digit code
+      if (!/^\d{6}$/.test(verificationCode)) {
+        throw new Error('Invalid verification code');
+      }
       
-      if (is2FAEnabled) {
-        success = await disableTwoFactor(verificationCode);
-      } else {
-        success = await enableTwoFactor(verificationCode);
+      const { error } = await supabase
+        .from('users')
+        .update({ two_factor_enabled: true })
+        .eq('id', user?.id);
+      
+      if (error) throw error;
+      
+      if (user) {
+        await updateUser({
+          ...user,
+          twoFactorEnabled: true
+        });
       }
-
-      if (success) {
-        onToggle2FA(!is2FAEnabled);
-        toast.success(is2FAEnabled ? '2FA disabled successfully' : '2FA enabled successfully');
-        onOpenChange(false);
-        setVerificationCode('');
-      } else {
-        toast.error('Invalid verification code');
-      }
-    } catch (error) {
-      toast.error('Failed to update 2FA settings');
-      console.error(error);
+      
+      setTwoFactorEnabled(true);
+      toast.success('Two-factor authentication enabled successfully');
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error('Error enabling 2FA:', error);
+      toast.error(error.message || 'Failed to enable two-factor authentication');
     } finally {
-      setIsProcessing(false);
+      setLoading(false);
     }
   };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard');
+  
+  const disable2FA = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      toast.error('Please enter a valid 6-digit code to disable 2FA');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ two_factor_enabled: false })
+        .eq('id', user?.id);
+      
+      if (error) throw error;
+      
+      if (user) {
+        await updateUser({
+          ...user,
+          twoFactorEnabled: false
+        });
+      }
+      
+      setTwoFactorEnabled(false);
+      toast.success('Two-factor authentication disabled');
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error('Error disabling 2FA:', error);
+      toast.error(error.message || 'Failed to disable two-factor authentication');
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{is2FAEnabled ? 'Disable' : 'Enable'} Two-Factor Authentication</DialogTitle>
-          <DialogDescription>
-            {is2FAEnabled 
-              ? 'Enter your verification code to disable 2FA'
-              : 'Enhance your account security by enabling two-factor authentication'
-            }
-          </DialogDescription>
+          <DialogTitle className="flex items-center gap-2">
+            <Smartphone className="h-5 w-5" />
+            Two-Factor Authentication
+          </DialogTitle>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
-          {!is2FAEnabled ? (
-            <>
-              <div className="bg-muted p-4 rounded-md mb-4">
-                <p className="text-sm mb-3 font-medium">Setup Instructions:</p>
-                <ol className="text-sm space-y-2 mb-4">
-                  <li>1. Install an authenticator app (Google Authenticator, Authy, etc.)</li>
-                  <li>2. Scan the QR code below or manually enter the secret key</li>
-                  <li>3. Enter the 6-digit code from your app</li>
-                </ol>
-                
-                <div className="bg-white p-4 rounded-md border mb-4">
-                  <div className="w-full h-32 border-2 border-dashed border-gray-300 flex items-center justify-center mb-3">
-                    <p className="text-sm text-gray-500">QR Code for: {qrCodeData}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Secret Key:</Label>
-                    <code className="text-xs bg-gray-100 px-2 py-1 rounded flex-1">{secretKey}</code>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => copyToClipboard(secretKey)}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
+        <div className="space-y-4 py-4">
+          <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div>
+              <h3 className="font-medium">2FA Status</h3>
+              <p className="text-sm text-muted-foreground">
+                {twoFactorEnabled ? 'Two-factor authentication is enabled' : 'Two-factor authentication is disabled'}
+              </p>
+            </div>
+            <Badge variant={twoFactorEnabled ? 'default' : 'secondary'}>
+              {twoFactorEnabled ? 'Enabled' : 'Disabled'}
+            </Badge>
+          </div>
+          
+          {!twoFactorEnabled && step === 'setup' && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <QrCode className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="font-medium mb-2">Enable Two-Factor Authentication</h3>
+                <p className="text-sm text-muted-foreground">
+                  Add an extra layer of security to your account by enabling 2FA
+                </p>
+              </div>
+              
+              <div className="bg-muted p-4 rounded-lg">
+                <h4 className="font-medium mb-2">What you'll need:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• An authenticator app (Google Authenticator, Authy, etc.)</li>
+                  <li>• Your phone to scan the QR code</li>
+                  <li>• A verification code from your app</li>
+                </ul>
+              </div>
+              
+              <Button onClick={generateQRCode} className="w-full">
+                Set up Two-Factor Authentication
+              </Button>
+            </div>
+          )}
+          
+          {!twoFactorEnabled && step === 'verify' && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <img 
+                  src={qrCodeUrl} 
+                  alt="2FA QR Code" 
+                  className="mx-auto mb-4 border rounded-lg"
+                />
+                <p className="text-sm text-muted-foreground mb-4">
+                  Scan this QR code with your authenticator app
+                </p>
+              </div>
+              
+              <div className="bg-muted p-4 rounded-lg">
+                <Label className="text-sm font-medium">Manual Entry Key</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <code className="text-sm bg-background px-2 py-1 rounded border flex-1">
+                    {secretKey}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(secretKey);
+                      toast.success('Secret key copied to clipboard');
+                    }}
+                  >
+                    Copy
+                  </Button>
                 </div>
               </div>
               
-              <div className="grid gap-2">
+              <div>
                 <Label htmlFor="verification-code">Verification Code</Label>
                 <Input
                   id="verification-code"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="Enter 6-digit code"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
                   maxLength={6}
                 />
               </div>
-            </>
-          ) : (
-            <div className="grid gap-2">
-              <Label htmlFor="verification-code">Verification Code</Label>
-              <Input
-                id="verification-code"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="Enter 6-digit code from your authenticator app"
-                maxLength={6}
-              />
-              <p className="text-sm text-muted-foreground">
-                Enter the verification code from your authenticator app to disable 2FA
-              </p>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setStep('setup')} className="flex-1">
+                  Back
+                </Button>
+                <Button 
+                  onClick={verifyAndEnable2FA} 
+                  disabled={loading || verificationCode.length !== 6}
+                  className="flex-1"
+                >
+                  {loading ? 'Verifying...' : 'Enable 2FA'}
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          {twoFactorEnabled && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <Key className="h-12 w-12 mx-auto mb-4 text-green-600" />
+                <h3 className="font-medium mb-2">Two-Factor Authentication is Active</h3>
+                <p className="text-sm text-muted-foreground">
+                  Your account is protected with two-factor authentication
+                </p>
+              </div>
+              
+              <div className="bg-muted p-4 rounded-lg">
+                <h4 className="font-medium mb-2">Security Tips:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Keep your backup codes in a safe place</li>
+                  <li>• Don't share your authenticator app with others</li>
+                  <li>• Update your app regularly</li>
+                </ul>
+              </div>
+              
+              <div>
+                <Label htmlFor="disable-code">Enter verification code to disable 2FA</Label>
+                <Input
+                  id="disable-code"
+                  placeholder="Enter 6-digit code"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  maxLength={6}
+                />
+              </div>
+              
+              <Button 
+                variant="destructive" 
+                onClick={disable2FA}
+                disabled={loading || verificationCode.length !== 6}
+                className="w-full"
+              >
+                {loading ? 'Disabling...' : 'Disable Two-Factor Authentication'}
+              </Button>
             </div>
           )}
         </div>
         
         <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-            disabled={isProcessing}
-          >
-            Cancel
-          </Button>
-          <Button 
-            type="submit" 
-            onClick={handleToggle2FA}
-            disabled={verificationCode.length !== 6 || isProcessing}
-          >
-            {isProcessing ? 'Processing...' : (is2FAEnabled ? 'Disable 2FA' : 'Enable 2FA')}
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -102,18 +102,22 @@ export function DepositOptions() {
     <Card>
       <CardHeader>
         <CardTitle>Deposit Funds</CardTitle>
-        <CardDescription>Choose your preferred deposit method and contact support via WhatsApp: {p2pDetails.whatsappNumber}</CardDescription>
+        <CardDescription>Choose your preferred deposit method</CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="bank" value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
-          <TabsList className="grid grid-cols-2">
+        <Tabs defaultValue="bank" className="space-y-4">
+          <TabsList className="grid grid-cols-3">
             <TabsTrigger value="bank">
               <CreditCard className="h-4 w-4 mr-2" />
               Bank Transfer
             </TabsTrigger>
+            <TabsTrigger value="card">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Card Payment
+            </TabsTrigger>
             <TabsTrigger value="crypto">
               <Bitcoin className="h-4 w-4 mr-2" />
-              USDT (Tether)
+              Cryptocurrency
             </TabsTrigger>
           </TabsList>
           
@@ -267,46 +271,49 @@ export function DepositOptions() {
             )}
           </TabsContent>
           
-          <TabsContent value="crypto" className="space-y-4">
+          <TabsContent value="card" className="space-y-4">
             {!isSubmitted ? (
               <>
-                <div className="bg-muted p-4 rounded-md space-y-4">
-                  <div>
-                    <Label>USDT Address (TRC-20)</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="font-medium text-sm break-all">{p2pDetails.cryptoAddress}</span>
+                <div className="bg-muted p-4 rounded-md space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label>Card Name</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{p2pDetails.accountName}</span>
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-6 w-6 flex-shrink-0" 
-                        onClick={() => handleCopy(p2pDetails.cryptoAddress)}
+                        className="h-6 w-6" 
+                        onClick={() => handleCopy(p2pDetails.accountName)}
                       >
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
-                  
                   <div className="flex justify-between items-center">
-                    <Label>Network</Label>
+                    <Label>Card Number</Label>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{p2pDetails.cryptoNetwork}</span>
+                      <span className="font-medium">{p2pDetails.accountNumber}</span>
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         className="h-6 w-6" 
-                        onClick={() => handleCopy(p2pDetails.cryptoNetwork)}
+                        onClick={() => handleCopy(p2pDetails.accountNumber)}
                       >
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
                     </div>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <Label>Card Address</Label>
+                    <p className="text-sm text-muted-foreground">{p2pDetails.address}</p>
                   </div>
                 </div>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="crypto-amount">Amount (USDT)</Label>
+                    <Label htmlFor="amount">Amount</Label>
                     <Input
-                      id="crypto-amount"
+                      id="amount"
                       type="number"
                       placeholder="Enter amount"
                       value={amount}
@@ -316,10 +323,10 @@ export function DepositOptions() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="crypto-txid">Transaction Hash / TxID</Label>
+                    <Label htmlFor="reference">Reference Number / Transaction ID</Label>
                     <Input
-                      id="crypto-txid"
-                      placeholder="Enter transaction hash"
+                      id="reference"
+                      placeholder="Enter reference number"
                       value={referenceNumber}
                       onChange={(e) => setReferenceNumber(e.target.value)}
                       disabled={isLoading}
@@ -327,17 +334,17 @@ export function DepositOptions() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="crypto-proof">Upload Payment Proof</Label>
+                    <Label htmlFor="proof">Upload Payment Proof</Label>
                     <div className="grid gap-2">
                       <Input
-                        id="crypto-proof"
+                        id="proof"
                         type="file"
                         accept="image/*"
                         onChange={handleFileChange}
                         disabled={isLoading}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Upload a screenshot of your transaction from wallet or exchange
+                        Upload a screenshot of your payment receipt
                       </p>
                     </div>
                   </div>
@@ -367,6 +374,17 @@ export function DepositOptions() {
                       </>
                     )}
                   </Button>
+
+                  {amount && referenceNumber && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={handleWhatsAppContact}
+                    >
+                      Contact Support via WhatsApp
+                    </Button>
+                  )}
                 </form>
               </>
             ) : (
@@ -387,6 +405,10 @@ export function DepositOptions() {
                 </Button>
               </div>
             )}
+          </TabsContent>
+          
+          <TabsContent value="crypto" className="space-y-4">
+            <CryptoOptions type="deposit" />
           </TabsContent>
         </Tabs>
       </CardContent>

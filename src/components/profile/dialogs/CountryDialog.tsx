@@ -1,16 +1,12 @@
 
 import { useState } from 'react';
-import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter 
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { allCountries } from '@/data/countries';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { allCountries } from '@/data/countries';
 
 interface CountryDialogProps {
   open: boolean;
@@ -18,98 +14,77 @@ interface CountryDialogProps {
 }
 
 export function CountryDialog({ open, onOpenChange }: CountryDialogProps) {
-  const { user, updateUser } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { user, updateUserProfile } = useAuth();
   const [selectedCountry, setSelectedCountry] = useState(user?.country || '');
-  
-  const filteredCountries = allCountries.filter(country =>
-    country.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  const handleSaveCountry = async () => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = async () => {
     if (!user || !selectedCountry) return;
     
-    const country = allCountries.find(c => c.name === selectedCountry);
-    if (!country) return;
-
+    setLoading(true);
     try {
+      const country = allCountries.find(c => c.name === selectedCountry);
+      const currency = country?.currency || 'USD';
+      const currencySymbol = country?.symbol || '$';
+
+      // Update via Supabase
       const { error } = await supabase
-        .from('users')
+        .from('profiles')
         .update({
           country: selectedCountry,
-          currency: country.currency,
-          currency_symbol: country.symbol
+          currency,
+          currency_symbol: currencySymbol
         })
-        .eq('id', user.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
-      await updateUser({
+      // Update local state
+      updateUserProfile?.({
         ...user,
         country: selectedCountry,
-        currency: country.currency,
-        currencySymbol: country.symbol
+        currency,
+        currencySymbol
       });
 
-      toast.success('Country and currency updated successfully');
+      toast.success('Country updated successfully');
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating country:', error);
       toast.error('Failed to update country');
+    } finally {
+      setLoading(false);
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Select Country</DialogTitle>
+          <DialogTitle>Change Country</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search countries..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <ScrollArea className="h-[300px]">
-            <div className="space-y-2">
-              {filteredCountries.map(country => (
-                <Button
-                  key={country.code}
-                  variant={selectedCountry === country.name ? 'default' : 'ghost'}
-                  className="w-full justify-between h-auto p-3"
-                  onClick={() => setSelectedCountry(country.name)}
-                >
-                  <div className="text-left">
-                    <div className="font-medium">{country.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {country.currency} ({country.symbol})
-                    </div>
-                  </div>
-                  {selectedCountry === country.name && (
-                    <div className="w-2 h-2 bg-current rounded-full" />
-                  )}
-                </Button>
+        <div className="py-4">
+          <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select your country" />
+            </SelectTrigger>
+            <SelectContent>
+              {allCountries.map(country => (
+                <SelectItem key={country.code} value={country.name}>
+                  {country.name}
+                </SelectItem>
               ))}
-            </div>
-          </ScrollArea>
+            </SelectContent>
+          </Select>
         </div>
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleSaveCountry}
-            disabled={!selectedCountry}
-          >
-            Save Country
+          <Button onClick={handleSave} disabled={loading || !selectedCountry}>
+            {loading ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogFooter>
       </DialogContent>

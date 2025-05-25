@@ -14,6 +14,9 @@ type UserType = {
   currencySymbol?: string;
   lastDepositTime?: string;
   twoFactorEnabled?: boolean;
+  phone?: string;
+  profileImageUrl?: string;
+  passportUrl?: string;
   sessions?: Array<{
     id: string;
     device: string;
@@ -31,6 +34,7 @@ type AuthContextType = {
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   updateUserProfile?: (updates: Partial<UserType>) => void;
+  updateUser?: (user: UserType) => Promise<void>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   verifyEmail: (token: string) => Promise<boolean>;
   sendEmailVerification: (email: string) => Promise<void>;
@@ -89,6 +93,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         currency: 'USD',
         currencySymbol: '$',
         twoFactorEnabled: false,
+        phone: '',
+        profileImageUrl: '',
+        passportUrl: '',
         sessions: [{
           id: 'session-' + Date.now(),
           device: 'Current Device',
@@ -129,6 +136,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         currency: 'USD',
         currencySymbol: '$',
         twoFactorEnabled: false,
+        phone: '',
+        profileImageUrl: '',
+        passportUrl: '',
         sessions: [{
           id: 'session-' + Date.now(),
           device: 'Current Device',
@@ -158,6 +168,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!user) return;
 
     const updatedUser = { ...user, ...updates };
+    localStorage.setItem('axiomify_user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
+  const updateUser = async (updatedUser: UserType) => {
     localStorage.setItem('axiomify_user', JSON.stringify(updatedUser));
     setUser(updatedUser);
   };
@@ -229,6 +244,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       signup, 
       logout, 
       updateUserProfile,
+      updateUser,
       updatePassword,
       verifyEmail,
       sendEmailVerification,

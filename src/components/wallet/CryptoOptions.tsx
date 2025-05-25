@@ -3,220 +3,225 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Bitcoin } from 'lucide-react';
+import { Bitcoin, Copy, ExternalLink } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
-import { supabase } from '@/integrations/supabase/client';
 
-const cryptoNetworks = [
-  {
-    id: 'btc',
-    name: 'Bitcoin',
-    symbol: 'BTC',
-    icon: Bitcoin,
-    networks: ['BTC']
-  },
-  {
-    id: 'usdt',
-    name: 'Tether',
-    symbol: 'USDT',
-    icon: () => (
-      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-        T
-      </div>
-    ),
-    networks: ['TRC-20', 'BEP-20', 'ERC-20']
-  },
-  {
-    id: 'eth',
-    name: 'Ethereum',
-    symbol: 'ETH',
-    icon: () => (
-      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-        E
-      </div>
-    ),
-    networks: ['ERC-20']
-  }
-];
-
-interface CryptoOptionsProps {
-  type: 'deposit' | 'withdrawal';
+interface CryptoNetwork {
+  id: string;
+  name: string;
+  symbol: string;
+  network: string;
+  address: string;
+  fee: number;
+  min_amount: number;
 }
 
-export function CryptoOptions({ type }: CryptoOptionsProps) {
-  const [selectedCrypto, setSelectedCrypto] = useState(cryptoNetworks[0]);
-  const [selectedNetwork, setSelectedNetwork] = useState(cryptoNetworks[0].networks[0]);
-  const [addresses, setAddresses] = useState<Record<string, string>>({});
+export function CryptoOptions() {
+  const [cryptoNetworks, setCryptoNetworks] = useState<CryptoNetwork[]>([]);
+  const [selectedNetwork, setSelectedNetwork] = useState<string>('');
   const [amount, setAmount] = useState('');
-  const [userAddress, setUserAddress] = useState('');
 
   useEffect(() => {
-    fetchCryptoAddresses();
+    loadCryptoNetworks();
   }, []);
 
-  const fetchCryptoAddresses = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('crypto_addresses')
-        .select('*');
-      
-      if (error) throw error;
-      
-      const addressMap: Record<string, string> = {};
-      data?.forEach(addr => {
-        addressMap[`${addr.crypto_type}_${addr.network}`] = addr.address;
-      });
-      setAddresses(addressMap);
-    } catch (error) {
-      console.error('Error fetching crypto addresses:', error);
-    }
+  const loadCryptoNetworks = () => {
+    // Mock crypto networks data - in production this would come from admin settings
+    const mockNetworks: CryptoNetwork[] = [
+      {
+        id: '1',
+        name: 'USDT',
+        symbol: 'USDT',
+        network: 'TRC-20 (Tron)',
+        address: 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE',
+        fee: 1,
+        min_amount: 10
+      },
+      {
+        id: '2',
+        name: 'USDT',
+        symbol: 'USDT',
+        network: 'BEP-20 (BSC)',
+        address: '0x742d35Cc6634C0532925a3b8D654E07E22C5e6D2',
+        fee: 0.5,
+        min_amount: 10
+      },
+      {
+        id: '3',
+        name: 'USDT',
+        symbol: 'USDT',
+        network: 'ERC-20 (Ethereum)',
+        address: '0x742d35Cc6634C0532925a3b8D654E07E22C5e6D2',
+        fee: 5,
+        min_amount: 20
+      },
+      {
+        id: '4',
+        name: 'Bitcoin',
+        symbol: 'BTC',
+        network: 'Bitcoin Network',
+        address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
+        fee: 0.0005,
+        min_amount: 0.001
+      }
+    ];
+    setCryptoNetworks(mockNetworks);
   };
 
-  const getAddress = () => {
-    const key = `${selectedCrypto.id}_${selectedNetwork}`;
-    return addresses[key] || 'Address not configured';
+  const selectedCrypto = cryptoNetworks.find(crypto => crypto.id === selectedNetwork);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Address copied to clipboard');
   };
 
-  const copyAddress = () => {
-    const address = getAddress();
-    if (address !== 'Address not configured') {
-      navigator.clipboard.writeText(address);
-      toast.success('Address copied to clipboard');
-    } else {
-      toast.error('Address not available');
-    }
-  };
-
-  const handleTransaction = () => {
-    if (!amount || parseFloat(amount) <= 0) {
-      toast.error('Please enter a valid amount');
+  const handleDeposit = () => {
+    if (!selectedNetwork || !amount) {
+      toast.error('Please select a network and enter an amount');
       return;
     }
 
-    if (type === 'withdrawal' && !userAddress) {
-      toast.error('Please enter your wallet address');
+    const numAmount = parseFloat(amount);
+    if (selectedCrypto && numAmount < selectedCrypto.min_amount) {
+      toast.error(`Minimum amount is ${selectedCrypto.min_amount} ${selectedCrypto.symbol}`);
       return;
     }
 
-    toast.success(`${type === 'deposit' ? 'Deposit' : 'Withdrawal'} request submitted`);
+    toast.success('Deposit instructions sent. Please send the exact amount to the provided address.');
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{type === 'deposit' ? 'Crypto Deposit' : 'Crypto Withdrawal'}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Crypto Selection */}
-        <div>
-          <label className="text-sm font-medium mb-2 block">Select Cryptocurrency</label>
-          <div className="grid grid-cols-1 gap-2">
-            {cryptoNetworks.map(crypto => {
-              const IconComponent = crypto.icon;
-              return (
-                <Button
-                  key={crypto.id}
-                  variant={selectedCrypto.id === crypto.id ? 'default' : 'outline'}
-                  className="justify-start h-auto p-4"
-                  onClick={() => {
-                    setSelectedCrypto(crypto);
-                    setSelectedNetwork(crypto.networks[0]);
-                  }}
-                >
-                  <IconComponent />
-                  <div className="ml-3 text-left">
-                    <div className="font-medium">{crypto.name}</div>
-                    <div className="text-sm text-muted-foreground">{crypto.symbol}</div>
-                  </div>
-                </Button>
-              );
-            })}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bitcoin className="h-5 w-5" />
+            Cryptocurrency Deposit
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Network Selection */}
+          <div>
+            <label className="text-sm font-medium mb-2 block">Select Network</label>
+            <Select value={selectedNetwork} onValueChange={setSelectedNetwork}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose cryptocurrency network" />
+              </SelectTrigger>
+              <SelectContent>
+                {cryptoNetworks.map((crypto) => (
+                  <SelectItem key={crypto.id} value={crypto.id}>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{crypto.symbol}</span>
+                      <span className="text-muted-foreground">({crypto.network})</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
 
-        {/* Network Selection */}
-        <div>
-          <label className="text-sm font-medium mb-2 block">Select Network</label>
-          <div className="flex gap-2 flex-wrap">
-            {selectedCrypto.networks.map(network => (
-              <Button
-                key={network}
-                variant={selectedNetwork === network ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedNetwork(network)}
-              >
-                {network}
-              </Button>
+          {/* Amount Input */}
+          <div>
+            <label className="text-sm font-medium mb-2 block">Amount</label>
+            <Input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Enter amount"
+              step="0.000001"
+            />
+            {selectedCrypto && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Minimum: {selectedCrypto.min_amount} {selectedCrypto.symbol} | 
+                Network fee: {selectedCrypto.fee} {selectedCrypto.symbol}
+              </p>
+            )}
+          </div>
+
+          {/* Selected Network Details */}
+          {selectedCrypto && (
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-medium">Deposit Address</h3>
+                <Badge variant="outline">{selectedCrypto.network}</Badge>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 p-3 bg-background rounded border">
+                  <code className="flex-1 text-sm break-all">{selectedCrypto.address}</code>
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => copyToClipboard(selectedCrypto.address)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Network:</span>
+                    <p className="font-medium">{selectedCrypto.network}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Fee:</span>
+                    <p className="font-medium">{selectedCrypto.fee} {selectedCrypto.symbol}</p>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                  <h4 className="font-medium text-yellow-800 mb-2">Important Instructions:</h4>
+                  <ul className="text-sm text-yellow-700 space-y-1">
+                    <li>• Only send {selectedCrypto.symbol} to this address</li>
+                    <li>• Make sure you're using the correct network ({selectedCrypto.network})</li>
+                    <li>• Minimum deposit: {selectedCrypto.min_amount} {selectedCrypto.symbol}</li>
+                    <li>• Deposits typically take 10-30 minutes to confirm</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Action Button */}
+          <Button 
+            onClick={handleDeposit} 
+            disabled={!selectedNetwork || !amount}
+            className="w-full"
+          >
+            Generate Deposit Instructions
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Network Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Supported Networks</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3">
+            {cryptoNetworks.map((crypto) => (
+              <div key={crypto.id} className="flex items-center justify-between p-3 border rounded">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
+                    <Bitcoin className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{crypto.symbol}</p>
+                    <p className="text-sm text-muted-foreground">{crypto.network}</p>
+                  </div>
+                </div>
+                <div className="text-right text-sm">
+                  <p className="text-muted-foreground">Min: {crypto.min_amount}</p>
+                  <p className="text-muted-foreground">Fee: {crypto.fee}</p>
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-
-        {/* Amount Input */}
-        <div>
-          <label className="text-sm font-medium mb-2 block">Amount</label>
-          <Input
-            type="number"
-            placeholder="Enter amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </div>
-
-        {type === 'deposit' ? (
-          /* Deposit Address */
-          <div>
-            <label className="text-sm font-medium mb-2 block">
-              {selectedCrypto.symbol} {selectedNetwork} Deposit Address
-            </label>
-            <div className="flex items-center gap-2">
-              <Input
-                value={getAddress()}
-                readOnly
-                className="font-mono text-sm"
-              />
-              <Button size="icon" variant="outline" onClick={copyAddress}>
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Send only {selectedCrypto.symbol} to this address via {selectedNetwork} network
-            </p>
-          </div>
-        ) : (
-          /* Withdrawal Address */
-          <div>
-            <label className="text-sm font-medium mb-2 block">
-              Your {selectedCrypto.symbol} Wallet Address
-            </label>
-            <Input
-              placeholder={`Enter your ${selectedCrypto.symbol} wallet address`}
-              value={userAddress}
-              onChange={(e) => setUserAddress(e.target.value)}
-              className="font-mono text-sm"
-            />
-            <p className="text-xs text-muted-foreground mt-2">
-              Make sure this address supports {selectedNetwork} network
-            </p>
-          </div>
-        )}
-
-        {/* Transaction Fee */}
-        <div className="bg-muted p-3 rounded-lg">
-          <div className="flex justify-between text-sm">
-            <span>Network Fee:</span>
-            <span>~0.001 {selectedCrypto.symbol}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span>Processing Time:</span>
-            <span>10-30 minutes</span>
-          </div>
-        </div>
-
-        <Button onClick={handleTransaction} className="w-full">
-          {type === 'deposit' ? 'Confirm Deposit' : 'Withdraw'}
-        </Button>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -31,7 +30,11 @@ type AuthContextType = {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, additionalData?: {
+    phone?: string;
+    country?: string;
+    referralCode?: string;
+  }) => Promise<void>;
   logout: () => void;
   updateUserProfile?: (updates: Partial<UserType>) => void;
   updateUser?: (user: UserType) => Promise<void>;
@@ -120,7 +123,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const signup = async (name: string, email: string, password: string) => {
+  const signup = async (name: string, email: string, password: string, additionalData?: {
+    phone?: string;
+    country?: string;
+    referralCode?: string;
+  }) => {
     try {
       setLoading(true);
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -129,14 +136,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: 'user-' + Date.now(),
         name,
         email,
-        walletBalance: 0,
+        walletBalance: additionalData?.referralCode ? 25 : 0, // Bonus for referrals
         kycVerified: false,
         avatar: undefined,
-        country: 'US',
+        country: additionalData?.country || 'US',
         currency: 'USD',
         currencySymbol: '$',
         twoFactorEnabled: false,
-        phone: '',
+        phone: additionalData?.phone || '',
         profileImageUrl: '',
         passportUrl: '',
         sessions: [{
@@ -149,6 +156,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       localStorage.setItem('axiomify_user', JSON.stringify(newUser));
       setUser(newUser);
+      
+      // If there's a referral code, show success message
+      if (additionalData?.referralCode) {
+        console.log(`User signed up with referral code: ${additionalData.referralCode}`);
+      }
+      
       navigate('/dashboard');
     } catch (error) {
       console.error('Signup error:', error);

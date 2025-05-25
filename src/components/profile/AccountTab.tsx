@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { Edit, Camera } from 'lucide-react';
+import { Edit, Camera, Phone, Mail, MapPin, CreditCard, Shield } from 'lucide-react';
 import { EditProfileDialog } from './dialogs/EditProfileDialog';
 
 export function AccountTab() {
@@ -48,47 +48,94 @@ export function AccountTab() {
               <h3 className="font-medium text-lg">{user.name}</h3>
               <p className="text-muted-foreground">{user.email}</p>
               {user.phone && (
-                <p className="text-sm text-muted-foreground">{user.phone}</p>
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Phone className="h-3 w-3" />
+                  {user.phone}
+                </p>
               )}
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <div className="text-sm text-muted-foreground">Full Name</div>
-              <div className="font-medium">{user.name || 'Not provided'}</div>
+          {/* Personal Information */}
+          <div>
+            <h4 className="font-medium mb-3">Personal Information</h4>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <div className="text-sm text-muted-foreground">Full Name</div>
+                <div className="font-medium">{user.name || 'Not provided'}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Date of Birth</div>
+                <div className="font-medium">Not provided</div>
+              </div>
             </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Email</div>
-              <div className="font-medium">{user.email}</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Phone Number</div>
-              <div className="font-medium">{user.phone || 'Not provided'}</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Country</div>
-              <div className="font-medium">{user.country || 'Not selected'}</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Currency</div>
-              <div className="font-medium">{user.currency} ({user.currencySymbol})</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">KYC Status</div>
+          </div>
+
+          {/* Contact Information */}
+          <div>
+            <h4 className="font-medium mb-3">Contact Information</h4>
+            <div className="grid grid-cols-2 gap-6">
               <div className="flex items-center gap-2">
-                <Badge variant={user.kycVerified ? 'default' : 'secondary'}>
-                  {user.kycVerified ? 'Verified' : 'Not Verified'}
-                </Badge>
-                {!user.kycVerified && (
-                  <Button 
-                    variant="link" 
-                    className="text-axiom-primary p-0 h-auto text-sm"
-                    onClick={() => navigate('/wallet#verification')}
-                  >
-                    Complete Verification
-                  </Button>
-                )}
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm text-muted-foreground">Email Address</div>
+                  <div className="font-medium">{user.email}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm text-muted-foreground">Mobile Number</div>
+                  <div className="font-medium">{user.phone || 'Not provided'}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm text-muted-foreground">Country</div>
+                  <div className="font-medium">{user.country || 'Not selected'}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm text-muted-foreground">Currency</div>
+                  <div className="font-medium">{user.currency} ({user.currencySymbol})</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Verification Status */}
+          <div>
+            <h4 className="font-medium mb-3">Verification Status</h4>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm text-muted-foreground">KYC Status</div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={user.kycVerified ? 'default' : 'secondary'}>
+                      {user.kycVerified ? 'Verified' : 'Not Verified'}
+                    </Badge>
+                    {!user.kycVerified && (
+                      <Button 
+                        variant="link" 
+                        className="text-axiom-primary p-0 h-auto text-sm"
+                        onClick={() => navigate('/wallet#verification')}
+                      >
+                        Complete Verification
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <div className="text-sm text-muted-foreground">Email Verification</div>
+                  <Badge variant="default">Verified</Badge>
+                </div>
               </div>
             </div>
           </div>

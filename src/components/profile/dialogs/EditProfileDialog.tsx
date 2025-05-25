@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Camera, Upload } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { allCountries } from '@/data/countries';
 
 interface EditProfileDialogProps {
@@ -26,29 +25,16 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
     name: user?.name || '',
     phone: user?.phone || '',
     country: user?.country || '',
-    currency: user?.currency || 'USD'
+    currency: user?.currency || 'USD',
+    email: user?.email || ''
   });
-  const [passportFile, setPassportFile] = useState<File | null>(null);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, type: 'passport' | 'profile') => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (type === 'passport') {
-        setPassportFile(file);
-      } else {
-        setProfileImageFile(file);
-      }
+      setProfileImageFile(file);
     }
-  };
-
-  const uploadFile = async (file: File, bucket: string, path: string) => {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, { upsert: true });
-    
-    if (error) throw error;
-    return data;
   };
 
   const handleSave = async () => {
@@ -56,46 +42,19 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
     
     setLoading(true);
     try {
-      let passportUrl = user.passportUrl;
       let profileImageUrl = user.profileImageUrl;
 
-      // Upload passport if new file selected
-      if (passportFile) {
-        const passportPath = `passports/${user.id}/${Date.now()}_${passportFile.name}`;
-        await uploadFile(passportFile, 'documents', passportPath);
-        const { data } = supabase.storage.from('documents').getPublicUrl(passportPath);
-        passportUrl = data.publicUrl;
-      }
-
-      // Upload profile image if new file selected
+      // Simulate file upload for profile image
       if (profileImageFile) {
-        const imagePath = `profiles/${user.id}/${Date.now()}_${profileImageFile.name}`;
-        await uploadFile(profileImageFile, 'profiles', imagePath);
-        const { data } = supabase.storage.from('profiles').getPublicUrl(imagePath);
-        profileImageUrl = data.publicUrl;
+        // In a real app, you would upload to your storage service
+        profileImageUrl = URL.createObjectURL(profileImageFile);
       }
 
       // Get currency symbol
       const selectedCountry = allCountries.find(c => c.name === profileData.country);
       const currencySymbol = selectedCountry?.symbol || '$';
 
-      // Update user data via Supabase
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: profileData.name,
-          phone: profileData.phone,
-          country: profileData.country,
-          currency: profileData.currency,
-          currency_symbol: currencySymbol,
-          passport_url: passportUrl,
-          profile_image_url: profileImageUrl
-        })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Update local user state
+      // Update local user state using mock data approach
       updateUserProfile?.({
         ...user,
         name: profileData.name,
@@ -103,8 +62,8 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
         country: profileData.country,
         currency: profileData.currency,
         currencySymbol: currencySymbol,
-        passportUrl,
-        profileImageUrl
+        profileImageUrl,
+        email: profileData.email
       });
 
       toast.success('Profile updated successfully');
@@ -147,7 +106,7 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => handleFileChange(e, 'profile')}
+                      onChange={handleFileChange}
                       className="hidden"
                       id="profile-upload"
                     />
@@ -173,29 +132,44 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
           {/* Basic Information */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">Full Name *</Label>
               <Input
                 id="name"
                 value={profileData.name}
                 onChange={(e) => setProfileData({...profileData, name: e.target.value})}
                 placeholder="Enter your full name"
+                required
               />
             </div>
             
             <div>
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="email">Email Address</Label>
               <Input
-                id="phone"
-                value={profileData.phone}
-                onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                placeholder="Enter your phone number"
+                id="email"
+                type="email"
+                value={profileData.email}
+                onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                placeholder="Enter your email"
+                disabled
+                className="bg-muted"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="country">Country</Label>
+              <Label htmlFor="phone">Phone Number *</Label>
+              <Input
+                id="phone"
+                value={profileData.phone}
+                onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                placeholder="Enter your phone number"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="country">Country *</Label>
               <Select value={profileData.country} onValueChange={(value) => {
                 const country = allCountries.find(c => c.name === value);
                 setProfileData({
@@ -216,7 +190,9 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
                 </SelectContent>
               </Select>
             </div>
-            
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="currency">Currency</Label>
               <Input
@@ -224,50 +200,13 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
                 value={profileData.currency}
                 readOnly
                 placeholder="Currency"
+                className="bg-muted"
               />
             </div>
           </div>
 
-          {/* Passport Upload */}
-          <div>
-            <Label className="text-sm mb-2 block">Passport/ID Document</Label>
-            <Card className="border-dashed border-2">
-              <CardContent className="p-6 text-center">
-                <div className="flex flex-col items-center gap-4">
-                  <Upload className="h-12 w-12 text-muted-foreground" />
-                  <div>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => handleFileChange(e, 'passport')}
-                      className="hidden"
-                      id="passport-upload"
-                    />
-                    <Label htmlFor="passport-upload" className="cursor-pointer">
-                      <Button variant="outline" asChild>
-                        <span>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Passport/ID
-                        </span>
-                      </Button>
-                    </Label>
-                    {passportFile ? (
-                      <p className="text-sm text-green-600 mt-2">
-                        Selected: {passportFile.name}
-                      </p>
-                    ) : user?.passportUrl ? (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Document already uploaded
-                      </p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Upload your passport or government-issued ID
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="text-sm text-muted-foreground">
+            <p>* Required fields</p>
           </div>
         </div>
         
@@ -275,7 +214,10 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={loading}>
+          <Button 
+            onClick={handleSave} 
+            disabled={loading || !profileData.name || !profileData.phone || !profileData.country}
+          >
             {loading ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogFooter>

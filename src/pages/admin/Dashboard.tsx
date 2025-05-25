@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, LineChart, DollarSign, PieChart, MessageSquare, ArrowRightLeft } from 'lucide-react';
+import { Users, LineChart, DollarSign, PieChart } from 'lucide-react';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { InvestmentManagement } from '@/components/admin/InvestmentManagement';
 import { P2PMatching } from '@/components/admin/P2PMatching';
@@ -10,7 +10,9 @@ import { AdminStatsCard } from '@/components/admin/AdminStatsCard';
 import { AdminDashboardHeader } from '@/components/admin/AdminDashboardHeader';
 import { AdminMessaging } from '@/components/admin/AdminMessaging';
 import { UserMatching } from '@/components/admin/UserMatching';
-import { toast } from '@/components/ui/sonner';
+import { UserBlockingManagement } from '@/components/admin/UserBlockingManagement';
+import { ExpiredInvestments } from '@/components/admin/ExpiredInvestments';
+import { NotificationCenter } from '@/components/admin/NotificationCenter';
 
 type AdminStat = {
   title: string;

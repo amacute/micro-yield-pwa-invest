@@ -42,9 +42,9 @@ export default function LandingPage() {
           </div>
           <div className="md:w-1/2">
             <img 
-              src="/placeholder.svg" 
-              alt="Investment Growth" 
-              className="rounded-2xl shadow-2xl" 
+              src="https://www.shutterstock.com/image-illustration/futuristic-p2p-money-transfer-concept-260nw-2589507137.jpg" 
+              alt="Futuristic P2P Money Transfer Concept" 
+              className="rounded-2xl shadow-2xl w-full h-auto" 
               width={600} 
               height={400} 
             />

@@ -3,12 +3,21 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { ArrowDown, ArrowUp, Clock, TrendingUp } from 'lucide-react';
+
+interface Transaction {
+  id: string;
+  type: 'deposit' | 'withdrawal' | 'investment' | 'return';
+  amount: number;
+  description: string;
+  status: 'completed' | 'pending' | 'failed';
+  created_at: string;
+  reference?: string;
+}
 
 export function TransactionHistory() {
   const { user } = useAuth();
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,14 +30,38 @@ export function TransactionHistory() {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // Mock transaction data
+      const mockTransactions: Transaction[] = [
+        {
+          id: '1',
+          type: 'deposit',
+          amount: 1000,
+          description: 'Bank Transfer Deposit',
+          status: 'completed',
+          created_at: new Date(Date.now() - 86400000).toISOString(),
+          reference: 'DEP001'
+        },
+        {
+          id: '2',
+          type: 'investment',
+          amount: -500,
+          description: 'Tech Startup Investment',
+          status: 'completed',
+          created_at: new Date(Date.now() - 172800000).toISOString(),
+          reference: 'INV001'
+        },
+        {
+          id: '3',
+          type: 'return',
+          amount: 550,
+          description: 'Investment Return - Tech Startup',
+          status: 'completed',
+          created_at: new Date(Date.now() - 259200000).toISOString(),
+          reference: 'RET001'
+        }
+      ];
       
-      if (error) throw error;
-      setTransactions(data || []);
+      setTransactions(mockTransactions);
     } catch (error) {
       console.error('Error fetching transactions:', error);
     } finally {
@@ -78,7 +111,7 @@ export function TransactionHistory() {
                     {getTransactionIcon(transaction.type)}
                   </div>
                   <div>
-                    <p className="font-medium">{transaction.description || transaction.type}</p>
+                    <p className="font-medium">{transaction.description}</p>
                     <p className="text-sm text-muted-foreground">
                       {new Date(transaction.created_at).toLocaleDateString()}
                     </p>

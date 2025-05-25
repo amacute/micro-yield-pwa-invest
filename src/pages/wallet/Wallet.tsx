@@ -1,181 +1,193 @@
+
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { BalanceCard } from '@/components/wallet/BalanceCard';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Wallet as WalletIcon, ArrowUpRight, ArrowDownLeft, History, TrendingUp } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { DepositOptions } from '@/components/wallet/DepositOptions';
 import { WithdrawalOptions } from '@/components/wallet/WithdrawalOptions';
-import { P2PPayment } from '@/components/wallet/P2PPayment';
-import { VerificationForm } from '@/components/verification/VerificationForm';
-import { useAuth } from '@/contexts/AuthContext';
-import { ArrowDown, ArrowUp, Clock, ChevronRight } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { TransactionHistory } from '@/components/wallet/TransactionHistory';
 
 export default function Wallet() {
   const { user } = useAuth();
-  const [showDeposit, setShowDeposit] = useState(false);
-  const [showWithdrawal, setShowWithdrawal] = useState(false);
-  const [showP2P, setShowP2P] = useState(false);
-  const [showVerification, setShowVerification] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
-  // Handle hash-based navigation
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      resetViews();
-      
-      switch (hash) {
-        case 'deposit':
-          setShowDeposit(true);
-          break;
-        case 'withdraw':
-          setShowWithdrawal(true);
-          break;
-        case 'p2p':
-          setShowP2P(true);
-          break;
-        case 'verification':
-          setShowVerification(true);
-          break;
-      }
-    };
+  // Mock portfolio data
+  const portfolioStats = {
+    totalInvested: 2500,
+    totalReturns: 3250,
+    activeInvestments: 3,
+    completedInvestments: 5,
+    roi: 30
+  };
 
-    window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Check initial hash
-
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  // Mock transaction data
-  const transactions = [
+  const recentInvestments = [
     {
-      id: 't1',
-      type: 'deposit',
-      amount: 500,
-      date: new Date(2023, 4, 15),
+      id: '1',
+      title: 'Tech Startup Fund',
+      amount: 1000,
+      return: 1300,
       status: 'completed',
-      description: 'Bank Deposit'
+      date: '2024-01-15'
     },
     {
-      id: 't2',
-      type: 'investment',
-      amount: -200,
-      date: new Date(2023, 4, 16),
-      status: 'completed',
-      description: 'Urban Development Project'
-    },
-    {
-      id: 't3',
-      type: 'return',
-      amount: 230,
-      date: new Date(2023, 4, 19),
-      status: 'completed',
-      description: 'Return from Urban Development'
-    },
-    {
-      id: 't4',
-      type: 'withdrawal',
-      amount: -100,
-      date: new Date(2023, 4, 20),
-      status: 'processing',
-      description: 'Withdrawal to Bank'
+      id: '2',
+      title: 'Real Estate Investment',
+      amount: 1500,
+      return: 1950,
+      status: 'active',
+      date: '2024-01-20'
     }
   ];
-  
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-  
-  const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case 'deposit':
-        return <ArrowDown className="h-4 w-4 text-green-500" />;
-      case 'withdrawal':
-        return <ArrowUp className="h-4 w-4 text-red-500" />;
-      case 'investment':
-        return <ArrowUp className="h-4 w-4 text-red-500" />;
-      case 'return':
-        return <ArrowDown className="h-4 w-4 text-green-500" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
-    }
+
+  const formatCurrency = (amount: number) => {
+    return `${user?.currencySymbol || '$'}${amount.toLocaleString()}`;
   };
 
-  const resetViews = () => {
-    setShowDeposit(false);
-    setShowWithdrawal(false);
-    setShowP2P(false);
-    setShowVerification(false);
-  };
-  
-  const handleBackClick = () => {
-    window.location.hash = '';
-    resetViews();
-  };
-  
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Wallet</h1>
-        <p className="text-muted-foreground">Manage your funds and transactions</p>
-      </div>
-      
-      <BalanceCard />
-      
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Button 
-          variant="outline" 
-          className="flex-1"
-          onClick={() => window.location.hash = 'deposit'}
-        >
-          Add Funds
-        </Button>
-        <Button 
-          variant="outline" 
-          className="flex-1"
-          onClick={() => window.location.hash = 'withdraw'}
-        >
-          Withdraw Funds
-        </Button>
-        <Button 
-          variant="outline" 
-          className="flex-1"
-          onClick={() => window.location.hash = 'p2p'}
-        >
-          P2P Payment
-        </Button>
-        <Button 
-          variant="outline" 
-          className="flex-1"
-          onClick={() => window.location.hash = 'verification'}
-        >
-          Verification
-        </Button>
-      </div>
-      
-      {(showDeposit || showWithdrawal || showP2P || showVerification) && (
+      <div className="flex items-center justify-between">
         <div>
-          <Button 
-            variant="ghost" 
-            className="mb-4"
-            onClick={handleBackClick}
-          >
-            ← Back to Transactions
-          </Button>
-          
-          {showDeposit && <DepositOptions />}
-          {showWithdrawal && <WithdrawalOptions />}
-          {showP2P && <P2PPayment />}
-          {showVerification && <VerificationForm />}
+          <h1 className="text-3xl font-bold">Wallet</h1>
+          <p className="text-muted-foreground">Manage your funds and view transactions</p>
         </div>
-      )}
-      
-      {!showDeposit && !showWithdrawal && !showP2P && !showVerification && (
-        <TransactionHistory />
-      )}
+      </div>
+
+      {/* Wallet Balance Card */}
+      <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-blue-100 mb-2">Available Balance</p>
+              <p className="text-3xl font-bold">
+                {formatCurrency(user?.walletBalance || 0)}
+              </p>
+            </div>
+            <WalletIcon className="h-12 w-12 text-blue-200" />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-8 w-8 text-green-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Total Invested</p>
+                <p className="text-xl font-bold">{formatCurrency(portfolioStats.totalInvested)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <ArrowUpRight className="h-8 w-8 text-blue-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Total Returns</p>
+                <p className="text-xl font-bold">{formatCurrency(portfolioStats.totalReturns)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                <span className="text-yellow-600 font-bold">{portfolioStats.activeInvestments}</span>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Active</p>
+                <p className="text-xl font-bold">Investments</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                <span className="text-green-600 font-bold">+{portfolioStats.roi}%</span>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">ROI</p>
+                <p className="text-xl font-bold">This Year</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid grid-cols-4">
+          <TabsTrigger value="overview">
+            <WalletIcon className="h-4 w-4 mr-2" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="deposit">
+            <ArrowDownLeft className="h-4 w-4 mr-2" />
+            Deposit
+          </TabsTrigger>
+          <TabsTrigger value="withdraw">
+            <ArrowUpRight className="h-4 w-4 mr-2" />
+            Withdraw
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            <History className="h-4 w-4 mr-2" />
+            History
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Investments</CardTitle>
+              <CardDescription>Your latest investment activities</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentInvestments.map((investment) => (
+                  <div key={investment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h3 className="font-medium">{investment.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Invested: {formatCurrency(investment.amount)} • {investment.date}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-green-600">
+                        {formatCurrency(investment.return)}
+                      </p>
+                      <Badge variant={investment.status === 'completed' ? 'default' : 'secondary'}>
+                        {investment.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="deposit">
+          <DepositOptions />
+        </TabsContent>
+
+        <TabsContent value="withdraw">
+          <WithdrawalOptions />
+        </TabsContent>
+
+        <TabsContent value="history">
+          <TransactionHistory />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

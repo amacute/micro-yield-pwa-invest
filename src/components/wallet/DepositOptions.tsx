@@ -8,6 +8,7 @@ import { CreditCard, Bitcoin, Copy, Upload, Check } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Loader } from '@/components/common/Loader';
 import { useAuth } from '@/contexts/AuthContext';
+import { CryptoOptions } from '@/components/wallet/CryptoOptions';
 
 export function DepositOptions() {
   const { user, updateUserProfile } = useAuth();
@@ -408,7 +409,7 @@ export function DepositOptions() {
           </TabsContent>
           
           <TabsContent value="crypto" className="space-y-4">
-            <CryptoOptions type="deposit" />
+            <CryptoOptions />
           </TabsContent>
         </Tabs>
       </CardContent>

@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { allCountries } from '@/data/countries';
 
 interface CountryDialogProps {
@@ -27,19 +26,7 @@ export function CountryDialog({ open, onOpenChange }: CountryDialogProps) {
       const currency = country?.currency || 'USD';
       const currencySymbol = country?.symbol || '$';
 
-      // Update via Supabase
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          country: selectedCountry,
-          currency,
-          currency_symbol: currencySymbol
-        })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Update local state
+      // Update local state directly since we're using mock data
       updateUserProfile?.({
         ...user,
         country: selectedCountry,

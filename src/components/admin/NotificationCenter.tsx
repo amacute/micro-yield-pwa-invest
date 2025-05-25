@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Send, User, AlertCircle } from 'lucide-react';
+import { Bell, Send, Users, User } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
 interface Notification {
@@ -13,10 +14,10 @@ interface Notification {
   title: string;
   message: string;
   type: 'info' | 'warning' | 'success' | 'error';
-  recipient_type: 'all' | 'specific';
-  recipient_id?: string;
+  target: 'all' | 'specific';
+  targetUsers?: string[];
   created_at: string;
-  read: boolean;
+  sent: boolean;
 }
 
 export function NotificationCenter() {
@@ -25,8 +26,8 @@ export function NotificationCenter() {
     title: '',
     message: '',
     type: 'info' as const,
-    recipient_type: 'all' as const,
-    recipient_id: ''
+    target: 'all' as const,
+    targetUsers: [] as string[]
   });
   const [loading, setLoading] = useState(false);
 
@@ -35,32 +36,31 @@ export function NotificationCenter() {
   }, []);
 
   const loadNotifications = () => {
-    // Mock notifications data
+    // Mock notification data
     const mockNotifications: Notification[] = [
       {
         id: '1',
         title: 'System Maintenance',
-        message: 'Scheduled maintenance will occur tonight from 2-4 AM',
+        message: 'Scheduled maintenance will occur on Sunday night.',
         type: 'warning',
-        recipient_type: 'all',
+        target: 'all',
         created_at: new Date().toISOString(),
-        read: false
+        sent: true
       },
       {
         id: '2',
-        title: 'Investment Expired',
-        message: 'Investment #12345 has expired and needs manual matching',
-        type: 'error',
-        recipient_type: 'specific',
-        recipient_id: 'admin',
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        read: true
+        title: 'New Investment Available',
+        message: 'A new high-yield investment opportunity is now available.',
+        type: 'success',
+        target: 'all',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        sent: true
       }
     ];
     setNotifications(mockNotifications);
   };
 
-  const sendNotification = async () => {
+  const handleSendNotification = async () => {
     if (!newNotification.title || !newNotification.message) {
       toast.error('Please fill in all required fields');
       return;
@@ -72,14 +72,10 @@ export function NotificationCenter() {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       const notification: Notification = {
-        id: `notif_${Date.now()}`,
-        title: newNotification.title,
-        message: newNotification.message,
-        type: newNotification.type,
-        recipient_type: newNotification.recipient_type,
-        recipient_id: newNotification.recipient_id || undefined,
+        id: Date.now().toString(),
+        ...newNotification,
         created_at: new Date().toISOString(),
-        read: false
+        sent: true
       };
 
       setNotifications(prev => [notification, ...prev]);
@@ -87,8 +83,8 @@ export function NotificationCenter() {
         title: '',
         message: '',
         type: 'info',
-        recipient_type: 'all',
-        recipient_id: ''
+        target: 'all',
+        targetUsers: []
       });
 
       toast.success('Notification sent successfully');
@@ -100,147 +96,136 @@ export function NotificationCenter() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'success': return 'bg-green-100 text-green-800';
-      case 'warning': return 'bg-yellow-100 text-yellow-800';
-      case 'error': return 'bg-red-100 text-red-800';
-      default: return 'bg-blue-100 text-blue-800';
+      case 'success': return 'text-green-600';
+      case 'warning': return 'text-yellow-600';
+      case 'error': return 'text-red-600';
+      default: return 'text-blue-600';
     }
+  };
+
+  const getTypeBadge = (type: string) => {
+    const variant = type === 'success' ? 'default' : 
+                   type === 'warning' ? 'secondary' : 
+                   type === 'error' ? 'destructive' : 'outline';
+    return <Badge variant={variant}>{type}</Badge>;
   };
 
   return (
     <div className="space-y-6">
-      {/* Send New Notification */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5" />
-            Send Notification
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Title</label>
-              <Input
-                value={newNotification.title}
-                onChange={(e) => setNewNotification(prev => ({...prev, title: e.target.value}))}
-                placeholder="Notification title"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Type</label>
-              <select 
-                className="w-full p-2 border rounded-md"
-                value={newNotification.type}
-                onChange={(e) => setNewNotification(prev => ({...prev, type: e.target.value as any}))}
-              >
-                <option value="info">Info</option>
-                <option value="success">Success</option>
-                <option value="warning">Warning</option>
-                <option value="error">Error</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium mb-2 block">Message</label>
-            <Textarea
-              value={newNotification.message}
-              onChange={(e) => setNewNotification(prev => ({...prev, message: e.target.value}))}
-              placeholder="Notification message"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Recipient</label>
-              <select 
-                className="w-full p-2 border rounded-md"
-                value={newNotification.recipient_type}
-                onChange={(e) => setNewNotification(prev => ({...prev, recipient_type: e.target.value as any}))}
-              >
-                <option value="all">All Users</option>
-                <option value="specific">Specific User</option>
-              </select>
-            </div>
-            {newNotification.recipient_type === 'specific' && (
-              <div>
-                <label className="text-sm font-medium mb-2 block">User ID</label>
-                <Input
-                  value={newNotification.recipient_id}
-                  onChange={(e) => setNewNotification(prev => ({...prev, recipient_id: e.target.value}))}
-                  placeholder="Enter user ID"
-                />
-              </div>
-            )}
-          </div>
-
-          <Button onClick={sendNotification} disabled={loading} className="w-full">
-            {loading ? 'Sending...' : 'Send Notification'}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Notifications History */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            Notifications History
+            Send New Notification
           </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Title</label>
+                <Input
+                  value={newNotification.title}
+                  onChange={(e) => setNewNotification(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Notification title"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Type</label>
+                <Select 
+                  value={newNotification.type} 
+                  onValueChange={(value: 'info' | 'warning' | 'success' | 'error') => 
+                    setNewNotification(prev => ({ ...prev, type: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="info">Info</SelectItem>
+                    <SelectItem value="success">Success</SelectItem>
+                    <SelectItem value="warning">Warning</SelectItem>
+                    <SelectItem value="error">Error</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Message</label>
+              <Textarea
+                value={newNotification.message}
+                onChange={(e) => setNewNotification(prev => ({ ...prev, message: e.target.value }))}
+                placeholder="Notification message"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Target Audience</label>
+              <Select 
+                value={newNotification.target} 
+                onValueChange={(value: 'all' | 'specific') => 
+                  setNewNotification(prev => ({ ...prev, target: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Users</SelectItem>
+                  <SelectItem value="specific">Specific Users</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button onClick={handleSendNotification} disabled={loading} className="w-full">
+              <Send className="h-4 w-4 mr-2" />
+              {loading ? 'Sending...' : 'Send Notification'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Notification History</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {notifications.map((notification) => (
               <div key={notification.id} className="border rounded-lg p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Bell className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium">{notification.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(notification.created_at)}
-                      </p>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">{notification.title}</h3>
                   <div className="flex items-center gap-2">
-                    <Badge className={getTypeColor(notification.type)}>
-                      {notification.type}
-                    </Badge>
-                    <Badge variant={notification.recipient_type === 'all' ? 'default' : 'secondary'}>
-                      {notification.recipient_type === 'all' ? 'All Users' : 'Specific'}
-                    </Badge>
+                    {getTypeBadge(notification.type)}
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      {notification.target === 'all' ? (
+                        <>
+                          <Users className="h-4 w-4" />
+                          All Users
+                        </>
+                      ) : (
+                        <>
+                          <User className="h-4 w-4" />
+                          Specific Users
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <p className="text-sm mb-2">{notification.message}</p>
-                {notification.recipient_id && (
-                  <p className="text-xs text-muted-foreground">
-                    Sent to: {notification.recipient_id}
-                  </p>
-                )}
+                <p className="text-muted-foreground mb-2">{notification.message}</p>
+                <div className="text-xs text-muted-foreground">
+                  Sent: {new Date(notification.created_at).toLocaleString()}
+                </div>
               </div>
             ))}
 
             {notifications.length === 0 && (
-              <div className="text-center py-8">
-                <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">No Notifications</h3>
-                <p className="text-muted-foreground">No notifications have been sent yet.</p>
+              <div className="text-center py-8 text-muted-foreground">
+                No notifications sent yet
               </div>
             )}
           </div>

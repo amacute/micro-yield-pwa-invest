@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -139,7 +138,7 @@ export function WithdrawalOptions() {
           </TabsContent>
           
           <TabsContent value="crypto" className="space-y-4">
-            <CryptoOptions type="withdrawal" />
+            <CryptoOptions />
           </TabsContent>
           
           <TabsContent value="confirm" className="space-y-4">

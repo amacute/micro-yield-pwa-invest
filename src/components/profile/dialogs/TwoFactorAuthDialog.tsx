@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { QrCode, Shield, ShieldOff } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 interface TwoFactorAuthDialogProps {
   open: boolean;
@@ -38,15 +37,11 @@ export function TwoFactorAuthDialog({ open, onOpenChange }: TwoFactorAuthDialogP
       }
 
       if (success) {
-        // Update via Supabase
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            two_factor_enabled: !user?.twoFactorEnabled
-          })
-          .eq('user_id', user?.id);
-
-        if (error) throw error;
+        // Update local state directly
+        updateUserProfile?.({
+          ...user,
+          twoFactorEnabled: !user?.twoFactorEnabled
+        });
 
         const action = user?.twoFactorEnabled ? 'disabled' : 'enabled';
         toast.success(`Two-factor authentication ${action} successfully`);

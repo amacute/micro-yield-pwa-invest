@@ -1,62 +1,23 @@
 
 {
-  "name": "Axiomify - P2P Investment Platform",
+  "name": "Axiomify P2P Lending",
   "short_name": "Axiomify",
-  "description": "A secure peer-to-peer investment platform with high-yield opportunities and real-time matching.",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#0EA5E9",
-  "orientation": "portrait-primary",
-  "categories": ["finance", "business"],
-  "lang": "en",
-  "scope": "/",
+  "description": "Secure peer-to-peer lending platform connecting borrowers and lenders",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ],
-  "shortcuts": [
-    {
-      "name": "Dashboard",
-      "short_name": "Dashboard",
-      "description": "View your investment dashboard",
-      "url": "/dashboard",
-      "icons": [
-        {
-          "src": "/icons/icon-192x192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "Wallet",
-      "short_name": "Wallet",
-      "description": "Manage your wallet",
-      "url": "/wallet",
-      "icons": [
-        {
-          "src": "/icons/icon-192x192.png",
-          "sizes": "192x192"
-        }
-      ]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/icons/icon-512x512.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "form_factor": "wide"
-    }
-  ]
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#7c3aed",
+  "background_color": "#ffffff",
+  "categories": ["finance", "business"]
 }

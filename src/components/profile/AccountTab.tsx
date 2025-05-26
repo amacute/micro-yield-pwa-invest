@@ -106,6 +106,19 @@ export function AccountTab() {
             </div>
           </div>
 
+          {/* Deposit Account Details */}
+          <div>
+            <h4 className="font-medium mb-3">Deposit Account Details</h4>
+            <div className="bg-muted/30 p-4 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">
+                Account details are determined by the borrower when requesting a loan.
+              </p>
+              <p className="text-sm">
+                Your deposit information will be provided when matched with a borrower.
+              </p>
+            </div>
+          </div>
+
           {/* Verification Status */}
           <div>
             <h4 className="font-medium mb-3">Verification Status</h4>

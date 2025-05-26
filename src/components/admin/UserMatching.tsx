@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { fetchAvailableUsers, createUserMatch } from '@/services/admin';
 import { Button } from '@/components/ui/button';
@@ -15,10 +16,10 @@ interface ApiResponse {
 export function UserMatching() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPayer, setSelectedPayer] = useState<any>(null);
-  const [selectedPayee, setSelectedPayee] = useState<any>(null);
-  const [transferAmount, setTransferAmount] = useState<number>(0);
-  const [transferPurpose, setTransferPurpose] = useState<string>('');
+  const [selectedLender, setSelectedLender] = useState<any>(null);
+  const [selectedBorrower, setSelectedBorrower] = useState<any>(null);
+  const [loanAmount, setLoanAmount] = useState<number>(0);
+  const [loanPurpose, setLoanPurpose] = useState<string>('');
   const [processing, setProcessing] = useState(false);
   
   useEffect(() => {
@@ -32,23 +33,23 @@ export function UserMatching() {
   }, []);
   
   const handleCreateMatch = async () => {
-    if (!selectedPayer || !selectedPayee) {
-      toast.error('Please select both payer and payee');
+    if (!selectedLender || !selectedBorrower) {
+      toast.error('Please select both lender and borrower');
       return;
     }
     
-    if (selectedPayer.user_id === selectedPayee.user_id) {
-      toast.error('Payer and payee cannot be the same user');
+    if (selectedLender.user_id === selectedBorrower.user_id) {
+      toast.error('Lender and borrower cannot be the same user');
       return;
     }
     
-    if (transferAmount <= 0) {
-      toast.error('Transfer amount must be greater than 0');
+    if (loanAmount <= 0) {
+      toast.error('Loan amount must be greater than 0');
       return;
     }
     
-    if (transferAmount > selectedPayer.wallet_balance) {
-      toast.error('Payer has insufficient funds');
+    if (loanAmount > selectedLender.wallet_balance) {
+      toast.error('Lender has insufficient funds');
       return;
     }
     
@@ -56,38 +57,41 @@ export function UserMatching() {
       setProcessing(true);
       
       const result = await createUserMatch(
-        selectedPayer.user_id,
-        selectedPayee.user_id,
-        transferAmount,
-        transferPurpose || 'Admin P2P Payment'
-      ) as ApiResponse;
+        selectedLender.user_id,
+        selectedBorrower.user_id,
+        loanAmount,
+        loanPurpose || 'P2P Loan'
+      );
       
-      if (result.success) {
+      // Fix the type assertion
+      const apiResult = result as unknown as ApiResponse;
+      
+      if (apiResult && typeof apiResult === 'object' && 'success' in apiResult && apiResult.success) {
         // Refresh users data
         const data = await fetchAvailableUsers();
         setUsers(data);
         
         // Reset form
-        setSelectedPayer(null);
-        setSelectedPayee(null);
-        setTransferAmount(0);
-        setTransferPurpose('');
+        setSelectedLender(null);
+        setSelectedBorrower(null);
+        setLoanAmount(0);
+        setLoanPurpose('');
         
-        toast.success(`Successfully matched ${selectedPayer.name || selectedPayer.email} to pay $${transferAmount} to ${selectedPayee.name || selectedPayee.email}`);
+        toast.success(`Successfully matched ${selectedLender.name || selectedLender.email} to lend $${loanAmount} to ${selectedBorrower.name || selectedBorrower.email}`);
       }
     } catch (error) {
-      console.error('Error creating user match:', error);
-      toast.error('Failed to create user match');
+      console.error('Error creating P2P loan match:', error);
+      toast.error('Failed to create P2P loan match');
     } finally {
       setProcessing(false);
     }
   };
   
   const resetSelection = () => {
-    setSelectedPayer(null);
-    setSelectedPayee(null);
-    setTransferAmount(0);
-    setTransferPurpose('');
+    setSelectedLender(null);
+    setSelectedBorrower(null);
+    setLoanAmount(0);
+    setLoanPurpose('');
   };
   
   if (loading) {
@@ -103,9 +107,9 @@ export function UserMatching() {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Users className="h-5 w-5" />
-          User Payment Matching
+          P2P Lending Matching
         </h2>
-        {(selectedPayer || selectedPayee) && (
+        {(selectedLender || selectedBorrower) && (
           <Button variant="outline" onClick={resetSelection}>
             Reset Selection
           </Button>
@@ -113,62 +117,62 @@ export function UserMatching() {
       </div>
       
       {/* Match Summary */}
-      {(selectedPayer || selectedPayee) && (
+      {(selectedLender || selectedBorrower) && (
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle className="text-lg">Payment Match Summary</CardTitle>
+            <CardTitle className="text-lg">Loan Match Summary</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between mb-4">
               <div className="flex-1">
-                <h4 className="font-medium">Payer</h4>
-                {selectedPayer ? (
+                <h4 className="font-medium">Lender</h4>
+                {selectedLender ? (
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="outline">{selectedPayer.name || selectedPayer.email}</Badge>
+                    <Badge variant="outline">{selectedLender.name || selectedLender.email}</Badge>
                     <span className="text-sm text-muted-foreground">
-                      Balance: ${Number(selectedPayer.wallet_balance).toFixed(2)}
+                      Available: ${Number(selectedLender.wallet_balance).toFixed(2)}
                     </span>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground text-sm">No payer selected</p>
+                  <p className="text-muted-foreground text-sm">No lender selected</p>
                 )}
               </div>
               
               <ArrowRight className="h-5 w-5 text-muted-foreground" />
               
               <div className="flex-1 text-right">
-                <h4 className="font-medium">Payee</h4>
-                {selectedPayee ? (
+                <h4 className="font-medium">Borrower</h4>
+                {selectedBorrower ? (
                   <div className="flex items-center justify-end gap-2 mt-1">
                     <span className="text-sm text-muted-foreground">
-                      Balance: ${Number(selectedPayee.wallet_balance).toFixed(2)}
+                      Balance: ${Number(selectedBorrower.wallet_balance).toFixed(2)}
                     </span>
-                    <Badge variant="outline">{selectedPayee.name || selectedPayee.email}</Badge>
+                    <Badge variant="outline">{selectedBorrower.name || selectedBorrower.email}</Badge>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground text-sm">No payee selected</p>
+                  <p className="text-muted-foreground text-sm">No borrower selected</p>
                 )}
               </div>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">Transfer Amount</label>
+                <label className="text-sm font-medium">Loan Amount</label>
                 <Input
                   type="number"
                   placeholder="0.00"
-                  value={transferAmount || ''}
-                  onChange={(e) => setTransferAmount(Number(e.target.value))}
+                  value={loanAmount || ''}
+                  onChange={(e) => setLoanAmount(Number(e.target.value))}
                   min="0"
                   step="0.01"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Purpose (Optional)</label>
+                <label className="text-sm font-medium">Purpose</label>
                 <Input
-                  placeholder="e.g., Investment payout"
-                  value={transferPurpose}
-                  onChange={(e) => setTransferPurpose(e.target.value)}
+                  placeholder="e.g., Business loan, Education"
+                  value={loanPurpose}
+                  onChange={(e) => setLoanPurpose(e.target.value)}
                 />
               </div>
             </div>
@@ -176,14 +180,14 @@ export function UserMatching() {
             <Button 
               className="w-full mt-4"
               onClick={handleCreateMatch}
-              disabled={!selectedPayer || !selectedPayee || transferAmount <= 0 || processing}
+              disabled={!selectedLender || !selectedBorrower || loanAmount <= 0 || processing}
             >
               {processing ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <DollarSign className="h-4 w-4 mr-2" />
               )}
-              {processing ? 'Processing...' : 'Create Payment Match'}
+              {processing ? 'Processing...' : 'Create Loan Match'}
             </Button>
           </CardContent>
         </Card>
@@ -195,8 +199,8 @@ export function UserMatching() {
           <Card 
             key={user.id} 
             className={`cursor-pointer transition-all ${
-              selectedPayer?.user_id === user.user_id ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950' :
-              selectedPayee?.user_id === user.user_id ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-950' :
+              selectedLender?.user_id === user.user_id ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950' :
+              selectedBorrower?.user_id === user.user_id ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-950' :
               'hover:shadow-md'
             }`}
           >
@@ -223,19 +227,19 @@ export function UserMatching() {
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    variant={selectedPayer?.user_id === user.user_id ? "default" : "outline"}
-                    onClick={() => setSelectedPayer(selectedPayer?.user_id === user.user_id ? null : user)}
-                    disabled={selectedPayee?.user_id === user.user_id}
+                    variant={selectedLender?.user_id === user.user_id ? "default" : "outline"}
+                    onClick={() => setSelectedLender(selectedLender?.user_id === user.user_id ? null : user)}
+                    disabled={selectedBorrower?.user_id === user.user_id}
                   >
-                    Payer
+                    Lender
                   </Button>
                   <Button
                     size="sm"
-                    variant={selectedPayee?.user_id === user.user_id ? "default" : "outline"}
-                    onClick={() => setSelectedPayee(selectedPayee?.user_id === user.user_id ? null : user)}
-                    disabled={selectedPayer?.user_id === user.user_id}
+                    variant={selectedBorrower?.user_id === user.user_id ? "default" : "outline"}
+                    onClick={() => setSelectedBorrower(selectedBorrower?.user_id === user.user_id ? null : user)}
+                    disabled={selectedLender?.user_id === user.user_id}
                   >
-                    Payee
+                    Borrower
                   </Button>
                 </div>
               </div>

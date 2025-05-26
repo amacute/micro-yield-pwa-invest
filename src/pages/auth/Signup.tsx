@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { Loader } from '@/components/common/Loader';
 import { allCountries } from '@/data/countries';
 
 export default function Signup() {
+  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -22,13 +24,12 @@ export default function Signup() {
   const { signup, signInWithGoogle, isLoading } = useAuth();
 
   // Get referral code from URL params
-  useState(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const refCode = urlParams.get('ref');
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
     if (refCode) {
       setFormData(prev => ({ ...prev, referralCode: refCode }));
     }
-  });
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +58,10 @@ export default function Signup() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Create account</CardTitle>
           <CardDescription className="text-center">
-            Enter your information to create your account
+            {formData.referralCode ? 
+              `Join Axiomify P2P Lending with referral code: ${formData.referralCode}` :
+              'Enter your information to create your account'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -180,7 +184,10 @@ export default function Signup() {
                   placeholder="Enter referral code"
                   value={formData.referralCode}
                   onChange={(e) => handleInputChange('referralCode', e.target.value)}
+                  disabled
+                  className="bg-muted"
                 />
+                <p className="text-xs text-green-600">You were referred by someone! You'll both earn rewards.</p>
               </div>
             )}
             

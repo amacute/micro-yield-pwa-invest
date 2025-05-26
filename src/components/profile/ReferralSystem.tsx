@@ -10,9 +10,9 @@ import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ReferralData {
-  referredUserId: string;
-  referredUserName: string;
-  joinDate: Date;
+  id: string;
+  referee_name: string;
+  joinDate: string;
   commission: number;
   status: string;
 }
@@ -26,42 +26,71 @@ export function ReferralSystem() {
     pendingCommissions: 0
   });
   const [recentReferrals, setRecentReferrals] = useState<ReferralData[]>([]);
+  const [userReferralCode, setUserReferralCode] = useState<string>('');
   
-  // Generate a unique referral code based on user ID
-  const referralCode = user ? `REF${user.id.slice(-6).toUpperCase()}` : 'REF000000';
-  const referralLink = `${window.location.origin}/signup?ref=${referralCode}`;
+  const referralLink = userReferralCode ? `${window.location.origin}/signup?ref=${userReferralCode}` : '';
 
   useEffect(() => {
     if (user) {
+      loadUserReferralCode();
       loadReferralData();
     }
   }, [user]);
+
+  const loadUserReferralCode = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('referral_code')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error loading referral code:', error);
+        return;
+      }
+
+      if (data?.referral_code) {
+        setUserReferralCode(data.referral_code);
+      }
+    } catch (error) {
+      console.error('Error loading referral code:', error);
+    }
+  };
 
   const loadReferralData = async () => {
     if (!user) return;
 
     try {
-      // Get users who were referred by this user
-      const { data: referredUsers, error } = await supabase
-        .from('users')
-        .select('id, name, email, created_at')
-        .eq('referral_code', referralCode);
+      // Get referrals made by this user
+      const { data: referrals, error } = await supabase
+        .from('referrals')
+        .select(`
+          id,
+          referee_id,
+          commission_amount,
+          created_at,
+          users!referrals_referee_id_fkey(name, email)
+        `)
+        .eq('referrer_id', user.id);
 
       if (error) {
         console.error('Error loading referral data:', error);
         return;
       }
 
-      const referrals = referredUsers || [];
+      const referralData = referrals || [];
       
       // Calculate stats
-      const totalReferrals = referrals.length;
-      const totalEarnings = totalReferrals * 5; // $5 per referral as example
+      const totalReferrals = referralData.length;
+      const totalEarnings = referralData.reduce((sum, ref) => sum + (ref.commission_amount || 0), 0);
       const currentMonth = new Date().getMonth();
-      const monthlyReferrals = referrals.filter(ref => 
+      const monthlyReferrals = referralData.filter(ref => 
         new Date(ref.created_at).getMonth() === currentMonth
-      ).length;
-      const monthlyEarnings = monthlyReferrals * 5;
+      );
+      const monthlyEarnings = monthlyReferrals.reduce((sum, ref) => sum + (ref.commission_amount || 0), 0);
 
       setReferralStats({
         totalReferrals,
@@ -71,11 +100,11 @@ export function ReferralSystem() {
       });
 
       // Set recent referrals
-      const recentReferralData: ReferralData[] = referrals.map(ref => ({
-        referredUserId: ref.id,
-        referredUserName: ref.name || ref.email,
-        joinDate: new Date(ref.created_at),
-        commission: 5,
+      const recentReferralData: ReferralData[] = referralData.map(ref => ({
+        id: ref.id,
+        referee_name: (ref.users as any)?.name || (ref.users as any)?.email || 'Unknown User',
+        joinDate: new Date(ref.created_at).toLocaleDateString(),
+        commission: ref.commission_amount || 0,
         status: 'active'
       }));
 
@@ -86,17 +115,25 @@ export function ReferralSystem() {
   };
 
   const copyReferralLink = () => {
-    navigator.clipboard.writeText(referralLink);
-    toast.success('Referral link copied to clipboard');
+    if (referralLink) {
+      navigator.clipboard.writeText(referralLink);
+      toast.success('Referral link copied to clipboard');
+    } else {
+      toast.error('Referral link not available');
+    }
   };
 
   const copyReferralCode = () => {
-    navigator.clipboard.writeText(referralCode);
-    toast.success('Referral code copied to clipboard');
+    if (userReferralCode) {
+      navigator.clipboard.writeText(userReferralCode);
+      toast.success('Referral code copied to clipboard');
+    } else {
+      toast.error('Referral code not available');
+    }
   };
 
   const shareReferral = () => {
-    const text = `Join me on Axiomify for secure P2P lending! Use my referral code: ${referralCode} or click: ${referralLink}`;
+    const text = `Join me on Axiomify for secure P2P lending! Use my referral code: ${userReferralCode} or click: ${referralLink}`;
     if (navigator.share) {
       navigator.share({ 
         title: 'Join Axiomify P2P Lending', 
@@ -155,8 +192,8 @@ export function ReferralSystem() {
           <div>
             <Label className="text-sm mb-2 block">Personal Referral Code</Label>
             <div className="flex items-center gap-2">
-              <Input value={referralCode} readOnly className="text-lg font-mono" />
-              <Button size="sm" variant="outline" onClick={copyReferralCode}>
+              <Input value={userReferralCode} readOnly className="text-lg font-mono" />
+              <Button size="sm" variant="outline" onClick={copyReferralCode} disabled={!userReferralCode}>
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
@@ -166,14 +203,14 @@ export function ReferralSystem() {
             <Label className="text-sm mb-2 block">Personal Referral Link</Label>
             <div className="flex items-center gap-2">
               <Input value={referralLink} readOnly className="text-sm" />
-              <Button size="sm" variant="outline" onClick={copyReferralLink}>
+              <Button size="sm" variant="outline" onClick={copyReferralLink} disabled={!referralLink}>
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={shareReferral} className="flex-1">
+            <Button onClick={shareReferral} className="flex-1" disabled={!userReferralCode}>
               <Share2 className="h-4 w-4 mr-2" />
               Share Referral
             </Button>
@@ -181,9 +218,10 @@ export function ReferralSystem() {
               variant="outline" 
               onClick={() => {
                 const subject = 'Join Axiomify P2P Lending Platform!';
-                const body = `Hi! I've been using Axiomify for P2P lending and thought you might be interested. Use my personal referral code: ${referralCode} or click: ${referralLink}`;
+                const body = `Hi! I've been using Axiomify for P2P lending and thought you might be interested. Use my personal referral code: ${userReferralCode} or click: ${referralLink}`;
                 window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
               }}
+              disabled={!userReferralCode}
             >
               Email
             </Button>
@@ -204,7 +242,7 @@ export function ReferralSystem() {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-axiom-primary rounded-full"></div>
-              <span>Earn 2% commission on their loan transactions</span>
+              <span>Earn 2% commission on their lending transactions</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-axiom-primary rounded-full"></div>
@@ -226,12 +264,12 @@ export function ReferralSystem() {
         <CardContent>
           <div className="space-y-3">
             {recentReferrals.length > 0 ? (
-              recentReferrals.map((referral, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+              recentReferrals.map((referral) => (
+                <div key={referral.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
                   <div>
-                    <p className="font-medium">{referral.referredUserName}</p>
+                    <p className="font-medium">{referral.referee_name}</p>
                     <p className="text-sm text-muted-foreground">
-                      Joined {referral.joinDate.toLocaleDateString()}
+                      Joined {referral.joinDate}
                     </p>
                   </div>
                   <div className="text-right">

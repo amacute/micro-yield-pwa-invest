@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from 'react';
-import { fetchAvailableUsers, createUserMatch } from '@/services/admin';
+import { fetchAvailableUsers } from '@/services/admin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Users, ArrowRight, DollarSign } from 'lucide-react';
+import { Loader2, Users, ArrowRight, DollarSign, Clock } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ApiResponse {
   success: boolean;
@@ -25,7 +26,9 @@ export function UserMatching() {
   useEffect(() => {
     const loadUsers = async () => {
       const data = await fetchAvailableUsers();
-      setUsers(data);
+      // Filter users who have made deposits
+      const eligibleUsers = data.filter(user => user.last_deposit_time !== null);
+      setUsers(eligibleUsers);
       setLoading(false);
     };
     
@@ -56,20 +59,23 @@ export function UserMatching() {
     try {
       setProcessing(true);
       
-      const result = await createUserMatch(
-        selectedLender.user_id,
-        selectedBorrower.user_id,
-        loanAmount,
-        loanPurpose || 'P2P Loan'
-      );
+      const { data, error } = await supabase
+        .rpc('create_lending_match', {
+          p_lender_id: selectedLender.user_id,
+          p_borrower_id: selectedBorrower.user_id,
+          p_amount: loanAmount,
+          p_purpose: loanPurpose || 'P2P Loan'
+        });
       
-      // Fix the type assertion
-      const apiResult = result as unknown as ApiResponse;
+      if (error) throw error;
       
-      if (apiResult && typeof apiResult === 'object' && 'success' in apiResult && apiResult.success) {
+      const apiResult = data as ApiResponse;
+      
+      if (apiResult && apiResult.success) {
         // Refresh users data
-        const data = await fetchAvailableUsers();
-        setUsers(data);
+        const updatedData = await fetchAvailableUsers();
+        const eligibleUsers = updatedData.filter(user => user.last_deposit_time !== null);
+        setUsers(eligibleUsers);
         
         // Reset form
         setSelectedLender(null);
@@ -77,11 +83,11 @@ export function UserMatching() {
         setLoanAmount(0);
         setLoanPurpose('');
         
-        toast.success(`Successfully matched ${selectedLender.name || selectedLender.email} to lend $${loanAmount} to ${selectedBorrower.name || selectedBorrower.email}`);
+        toast.success(`Successfully matched ${selectedLender.name || selectedLender.email} to lend $${loanAmount} to ${selectedBorrower.name || selectedBorrower.email}. 100% profit (${loanAmount * 2}) will be credited after 72 hours.`);
       }
     } catch (error) {
-      console.error('Error creating P2P loan match:', error);
-      toast.error('Failed to create P2P loan match');
+      console.error('Error creating P2P lending match:', error);
+      toast.error('Failed to create P2P lending match');
     } finally {
       setProcessing(false);
     }
@@ -120,7 +126,7 @@ export function UserMatching() {
       {(selectedLender || selectedBorrower) && (
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle className="text-lg">Loan Match Summary</CardTitle>
+            <CardTitle className="text-lg">Lending Match Summary</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between mb-4">
@@ -155,7 +161,7 @@ export function UserMatching() {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="text-sm font-medium">Loan Amount</label>
                 <Input
@@ -177,8 +183,19 @@ export function UserMatching() {
               </div>
             </div>
             
+            {loanAmount > 0 && (
+              <div className="bg-green-50 dark:bg-green-950 p-3 rounded-lg mb-4">
+                <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                  <Clock className="h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    Lender will receive ${(loanAmount * 2).toFixed(2)} (100% profit) after 72 hours
+                  </span>
+                </div>
+              </div>
+            )}
+            
             <Button 
-              className="w-full mt-4"
+              className="w-full"
               onClick={handleCreateMatch}
               disabled={!selectedLender || !selectedBorrower || loanAmount <= 0 || processing}
             >
@@ -187,7 +204,7 @@ export function UserMatching() {
               ) : (
                 <DollarSign className="h-4 w-4 mr-2" />
               )}
-              {processing ? 'Processing...' : 'Create Loan Match'}
+              {processing ? 'Processing...' : 'Create Lending Match'}
             </Button>
           </CardContent>
         </Card>
@@ -219,29 +236,34 @@ export function UserMatching() {
                 </div>
               </div>
               
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mb-2">
                 <Badge variant={user.kyc_verified ? "default" : "secondary"}>
                   {user.kyc_verified ? "Verified" : "Pending"}
                 </Badge>
-                
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant={selectedLender?.user_id === user.user_id ? "default" : "outline"}
-                    onClick={() => setSelectedLender(selectedLender?.user_id === user.user_id ? null : user)}
-                    disabled={selectedBorrower?.user_id === user.user_id}
-                  >
-                    Lender
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={selectedBorrower?.user_id === user.user_id ? "default" : "outline"}
-                    onClick={() => setSelectedBorrower(selectedBorrower?.user_id === user.user_id ? null : user)}
-                    disabled={selectedLender?.user_id === user.user_id}
-                  >
-                    Borrower
-                  </Button>
-                </div>
+                <Badge variant="outline" className="text-xs">
+                  Deposit Made
+                </Badge>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={selectedLender?.user_id === user.user_id ? "default" : "outline"}
+                  onClick={() => setSelectedLender(selectedLender?.user_id === user.user_id ? null : user)}
+                  disabled={selectedBorrower?.user_id === user.user_id}
+                  className="flex-1"
+                >
+                  Lender
+                </Button>
+                <Button
+                  size="sm"
+                  variant={selectedBorrower?.user_id === user.user_id ? "default" : "outline"}
+                  onClick={() => setSelectedBorrower(selectedBorrower?.user_id === user.user_id ? null : user)}
+                  disabled={selectedLender?.user_id === user.user_id}
+                  className="flex-1"
+                >
+                  Borrower
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -250,8 +272,8 @@ export function UserMatching() {
       
       {users.length === 0 && (
         <div className="text-center py-8 border rounded-lg">
-          <p className="text-muted-foreground">No users found</p>
-        </div>
+          <p className="text-muted-foreground">No eligible users found. Users must make a deposit before participating in P2P lending.</p>
+        </CardContent>
       )}
     </div>
   );

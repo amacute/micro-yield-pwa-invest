@@ -18,43 +18,12 @@ export const fetchUsers = async () => {
   return data || [];
 };
 
-// Investment management
-export const fetchInvestments = async () => {
-  const { data, error } = await supabase
-    .from('investments')
-    .select('*')
-    .order('created_at', { ascending: false });
-  
-  if (error) {
-    console.error('Error fetching investments:', error);
-    toast.error('Failed to load investments');
-    return [];
-  }
-  
-  return data || [];
-};
-
-export const createInvestment = async (investment: any) => {
-  const { data, error } = await supabase
-    .from('investments')
-    .insert([investment])
-    .select();
-  
-  if (error) {
-    console.error('Error creating investment:', error);
-    toast.error('Failed to create investment');
-    return null;
-  }
-  
-  toast.success('Investment created successfully');
-  return data?.[0] || null;
-};
-
-// P2P User Matching - Updated to work with real users
+// P2P User Matching - Updated to work with real users who have made deposits
 export const fetchAvailableUsers = async () => {
   const { data, error } = await supabase
     .from('users')
     .select('*')
+    .not('last_deposit_time', 'is', null)
     .order('wallet_balance', { ascending: false });
   
   if (error) {
@@ -66,82 +35,81 @@ export const fetchAvailableUsers = async () => {
   return data || [];
 };
 
-// Create P2P payment using the database function
-export const createUserMatch = async (payerId: string, payeeId: string, amount: number, purpose?: string) => {
+// Create P2P lending match using the database function
+export const createLendingMatch = async (lenderId: string, borrowerId: string, amount: number, purpose?: string) => {
   const { data, error } = await supabase
-    .rpc('create_p2p_payment', {
-      payer_user_id: payerId,
-      payee_user_id: payeeId,
-      payment_amount: amount,
-      payment_purpose: purpose
+    .rpc('create_lending_match', {
+      p_lender_id: lenderId,
+      p_borrower_id: borrowerId,
+      p_amount: amount,
+      p_purpose: purpose
     });
   
   if (error) {
-    console.error('Error creating user match:', error);
-    toast.error('Failed to create payment match');
+    console.error('Error creating lending match:', error);
+    toast.error('Failed to create lending match');
     return { success: false, message: error.message };
   }
   
-  toast.success('Payment match created successfully');
+  toast.success('Lending match created successfully');
   return data;
 };
 
-// P2P Loans
-export const fetchPendingLoans = async () => {
+// Deposit management
+export const fetchDeposits = async () => {
   const { data, error } = await supabase
-    .from('p2p_loans')
+    .from('deposits')
     .select(`
       *,
       users!inner(name, email)
     `)
-    .eq('status', 'pending')
     .order('created_at', { ascending: false });
   
   if (error) {
-    console.error('Error fetching pending loans:', error);
-    toast.error('Failed to load pending loans');
+    console.error('Error fetching deposits:', error);
+    toast.error('Failed to load deposits');
     return [];
   }
   
   return data || [];
 };
 
-export const fetchAvailableInvestors = async () => {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('kyc_verified', true)
-    .gt('wallet_balance', 0)
-    .order('wallet_balance', { ascending: false });
-  
-  if (error) {
-    console.error('Error fetching available investors:', error);
-    toast.error('Failed to load available investors');
-    return [];
-  }
-  
-  return data || [];
-};
-
-export const createP2PMatch = async (loanId: string, investorMatches: { id: string, amount: number }[]) => {
-  const investorIds = investorMatches.map(match => match.id);
-  const amounts = investorMatches.map(match => match.amount);
-  
-  const { data, error } = await supabase
-    .rpc('create_p2p_match', {
-      loan_id: loanId,
-      investor_ids: investorIds,
-      amounts: amounts
+export const approveDeposit = async (depositId: string, amount: number, userId: string) => {
+  const { error } = await supabase
+    .rpc('approve_deposit', {
+      deposit_id: depositId,
+      deposit_amount: amount,
+      user_id: userId
     });
   
   if (error) {
-    console.error('Error creating P2P match:', error);
-    toast.error('Failed to create P2P match');
-    return { success: false, message: error.message };
+    console.error('Error approving deposit:', error);
+    toast.error('Failed to approve deposit');
+    return false;
   }
   
-  toast.success('P2P match created successfully');
-  return { success: true, ...(data as Record<string, unknown>) };
+  toast.success('Deposit approved successfully');
+  return true;
+};
+
+// Lending matches management
+export const fetchLendingMatches = async () => {
+  const { data, error } = await supabase
+    .from('lending_matches')
+    .select(`
+      *,
+      lender:users!lending_matches_lender_id_fkey(name, email),
+      borrower:users!lending_matches_borrower_id_fkey(name, email)
+    `)
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching lending matches:', error);
+    toast.error('Failed to load lending matches');
+    return [];
+  }
+  
+  return data || [];
 };
 
 // Analytics
@@ -157,41 +125,47 @@ export const fetchAnalyticsData = async () => {
       .select('*', { count: 'exact', head: true })
       .eq('kyc_verified', true);
     
-    // Investment stats
-    const { count: totalInvestments } = await supabase
-      .from('investments')
+    const { count: usersWithDeposits } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .not('last_deposit_time', 'is', null);
+    
+    // Deposit stats
+    const { count: totalDeposits } = await supabase
+      .from('deposits')
       .select('*', { count: 'exact', head: true });
     
-    const { data: investmentSum } = await supabase
-      .from('investments')
-      .select('raised');
-    
-    const totalRaised = investmentSum?.reduce((sum, inv) => sum + (inv.raised || 0), 0) || 0;
-    
-    // P2P stats
-    const { count: totalLoans } = await supabase
-      .from('p2p_loans')
-      .select('*', { count: 'exact', head: true });
-    
-    const { data: fundedLoans } = await supabase
-      .from('p2p_loans')
+    const { data: depositSum } = await supabase
+      .from('deposits')
       .select('amount')
-      .eq('status', 'funded');
+      .eq('status', 'approved');
     
-    const totalFunded = fundedLoans?.reduce((sum, loan) => sum + (loan.amount || 0), 0) || 0;
+    const totalDepositAmount = depositSum?.reduce((sum, dep) => sum + (dep.amount || 0), 0) || 0;
+    
+    // Lending stats
+    const { count: totalMatches } = await supabase
+      .from('lending_matches')
+      .select('*', { count: 'exact', head: true });
+    
+    const { data: lendingVolume } = await supabase
+      .from('lending_matches')
+      .select('amount');
+    
+    const totalLendingVolume = lendingVolume?.reduce((sum, match) => sum + (match.amount || 0), 0) || 0;
     
     return {
       userStats: {
         total: totalUsers || 0,
-        verified: verifiedUsers || 0
+        verified: verifiedUsers || 0,
+        withDeposits: usersWithDeposits || 0
       },
-      investmentStats: {
-        total: totalInvestments || 0,
-        raised: totalRaised
+      depositStats: {
+        total: totalDeposits || 0,
+        approved: totalDepositAmount
       },
-      loanStats: {
-        total: totalLoans || 0,
-        funded: totalFunded
+      lendingStats: {
+        totalMatches: totalMatches || 0,
+        volume: totalLendingVolume
       }
     };
   } catch (error) {
@@ -199,9 +173,9 @@ export const fetchAnalyticsData = async () => {
     toast.error('Failed to load analytics data');
     
     return {
-      userStats: { total: 0, verified: 0 },
-      investmentStats: { total: 0, raised: 0 },
-      loanStats: { total: 0, funded: 0 }
+      userStats: { total: 0, verified: 0, withDeposits: 0 },
+      depositStats: { total: 0, approved: 0 },
+      lendingStats: { totalMatches: 0, volume: 0 }
     };
   }
 };

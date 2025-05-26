@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { Edit, Camera, Phone, Mail, MapPin, CreditCard, Shield } from 'lucide-react';
+import { Edit, Camera, Phone, Mail, MapPin, CreditCard, Shield, AlertCircle } from 'lucide-react';
 import { EditProfileDialog } from './dialogs/EditProfileDialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function AccountTab() {
   const { user } = useAuth();
@@ -108,15 +109,31 @@ export function AccountTab() {
 
           {/* Deposit Account Details */}
           <div>
-            <h4 className="font-medium mb-3">Deposit Account Details</h4>
-            <div className="bg-muted/30 p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-2">
-                Account details are determined by the borrower when requesting a loan.
-              </p>
-              <p className="text-sm">
-                Your deposit information will be provided when matched with a borrower.
-              </p>
-            </div>
+            <h4 className="font-medium mb-3">P2P Lending Account Details</h4>
+            {!user.lastDepositTime ? (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  You must make a deposit before you can participate in P2P lending or withdraw funds.{' '}
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto text-axiom-primary" 
+                    onClick={() => navigate('/wallet#deposit')}
+                  >
+                    Make a deposit now
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <div className="bg-muted/30 p-4 rounded-lg">
+                <p className="text-sm text-green-600 mb-2">
+                  ✓ Account verified - You can participate in P2P lending
+                </p>
+                <p className="text-sm">
+                  Last deposit: {new Date(user.lastDepositTime).toLocaleDateString()}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Verification Status */}

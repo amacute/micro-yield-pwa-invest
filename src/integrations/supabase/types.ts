@@ -137,6 +137,42 @@ export type Database = {
         }
         Relationships: []
       }
+      p2p_payments: {
+        Row: {
+          admin_id: string | null
+          amount: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          payee_id: string | null
+          payer_id: string | null
+          purpose: string | null
+          status: string
+        }
+        Insert: {
+          admin_id?: string | null
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          payee_id?: string | null
+          payer_id?: string | null
+          purpose?: string | null
+          status?: string
+        }
+        Update: {
+          admin_id?: string | null
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          payee_id?: string | null
+          payer_id?: string | null
+          purpose?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           bio: string | null
@@ -158,6 +194,39 @@ export type Database = {
           id?: never
           user_id?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          reference_id: string | null
+          status: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          reference_id?: string | null
+          status?: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          reference_id?: string | null
+          status?: string
+          type?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -202,31 +271,82 @@ export type Database = {
           },
         ]
       }
-      users: {
+      user_sessions: {
         Row: {
           created_at: string
+          device: string
+          id: string
+          last_active: string
+          location: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device: string
+          id?: string
+          last_active?: string
+          location: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device?: string
+          id?: string
+          last_active?: string
+          location?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          country: string | null
+          created_at: string
+          currency: string | null
+          currency_symbol: string | null
           email: string
           id: string
           kyc_verified: boolean
           name: string | null
+          passport_url: string | null
+          phone: string | null
+          profile_image_url: string | null
+          two_factor_enabled: boolean | null
+          updated_at: string | null
           user_id: string
           wallet_balance: number
         }
         Insert: {
+          country?: string | null
           created_at?: string
+          currency?: string | null
+          currency_symbol?: string | null
           email: string
           id?: string
           kyc_verified?: boolean
           name?: string | null
+          passport_url?: string | null
+          phone?: string | null
+          profile_image_url?: string | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
           user_id: string
           wallet_balance?: number
         }
         Update: {
+          country?: string | null
           created_at?: string
+          currency?: string | null
+          currency_symbol?: string | null
           email?: string
           id?: string
           kyc_verified?: boolean
           name?: string | null
+          passport_url?: string | null
+          phone?: string | null
+          profile_image_url?: string | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
           user_id?: string
           wallet_balance?: number
         }
@@ -239,6 +359,15 @@ export type Database = {
     Functions: {
       create_p2p_match: {
         Args: { loan_id: string; investor_ids: string[]; amounts: number[] }
+        Returns: Json
+      }
+      create_p2p_payment: {
+        Args: {
+          payer_user_id: string
+          payee_user_id: string
+          payment_amount: number
+          payment_purpose?: string
+        }
         Returns: Json
       }
       is_admin: {

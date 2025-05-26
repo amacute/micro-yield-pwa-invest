@@ -1,5 +1,9 @@
+
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
+import { toast } from '@/components/ui/sonner';
 
 type UserType = {
   id: string;
@@ -29,6 +33,7 @@ type AuthContextType = {
   loading: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
+  session: Session | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string, additionalData?: {
     phone?: string;
@@ -46,6 +51,7 @@ type AuthContextType = {
   disableTwoFactor: (code: string) => Promise<boolean>;
   getSessions: () => Array<any>;
   terminateSession: (sessionId: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -64,59 +70,106 @@ type AuthProviderProps = {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<UserType | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isAuthenticated = user !== null;
+  const isAuthenticated = user !== null && session !== null;
+
+  // Transform Supabase user to our UserType
+  const transformUser = (authUser: User, userData: any): UserType => {
+    return {
+      id: authUser.id,
+      name: userData?.name || authUser.user_metadata?.name || authUser.user_metadata?.full_name || '',
+      email: authUser.email || '',
+      phone: userData?.phone || authUser.phone || '',
+      walletBalance: userData?.wallet_balance || 0,
+      kycVerified: userData?.kyc_verified || false,
+      country: userData?.country || 'US',
+      currency: userData?.currency || 'USD',
+      currencySymbol: userData?.currency_symbol || '$',
+      twoFactorEnabled: userData?.two_factor_enabled || false,
+      profileImageUrl: userData?.profile_image_url || '',
+      passportUrl: userData?.passport_url || '',
+      avatar: userData?.profile_image_url,
+      sessions: [] // Will be populated separately if needed
+    };
+  };
+
+  // Fetch user profile data
+  const fetchUserProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching user profile:', error);
+    }
+    return data;
+  };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('axiomify_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        
+        if (session?.user) {
+          // Fetch user profile data
+          setTimeout(async () => {
+            const userData = await fetchUserProfile(session.user.id);
+            const transformedUser = transformUser(session.user, userData);
+            setUser(transformedUser);
+          }, 0);
+        } else {
+          setUser(null);
+        }
+        
+        setLoading(false);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        fetchUserProfile(session.user.id).then(userData => {
+          const transformedUser = transformUser(session.user, userData);
+          setUser(transformedUser);
+          setLoading(false);
+        });
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const isAdmin = email.includes('admin');
-
-      const authenticatedUser: UserType = {
-        id: 'user-' + Date.now(),
-        name: email.split('@')[0],
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        walletBalance: 0,
-        kycVerified: false,
-        avatar: undefined,
-        country: 'US',
-        currency: 'USD',
-        currencySymbol: '$',
-        twoFactorEnabled: false,
-        phone: '',
-        profileImageUrl: '',
-        passportUrl: '',
-        sessions: [{
-          id: 'session-' + Date.now(),
-          device: 'Current Device',
-          location: 'Washington, DC',
-          lastActive: new Date().toISOString()
-        }]
-      };
+        password
+      });
 
-      localStorage.setItem('axiomify_user', JSON.stringify(authenticatedUser));
-      setUser(authenticatedUser);
+      if (error) throw error;
+
+      // Check if user is admin
+      const isAdmin = email.includes('admin');
       
       if (isAdmin) {
-        navigate('/admin/dashboard');
+        navigate('/admin');
       } else {
         navigate('/dashboard');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      toast.error(error.message || 'Login failed');
       throw error;
     } finally {
       setLoading(false);
@@ -130,106 +183,179 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }) => {
     try {
       setLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const newUser: UserType = {
-        id: 'user-' + Date.now(),
-        name,
-        email,
-        walletBalance: additionalData?.referralCode ? 25 : 0, // Bonus for referrals
-        kycVerified: false,
-        avatar: undefined,
-        country: additionalData?.country || 'US',
-        currency: 'USD',
-        currencySymbol: '$',
-        twoFactorEnabled: false,
-        phone: additionalData?.phone || '',
-        profileImageUrl: '',
-        passportUrl: '',
-        sessions: [{
-          id: 'session-' + Date.now(),
-          device: 'Current Device',
-          location: 'Washington, DC',
-          lastActive: new Date().toISOString()
-        }]
-      };
-
-      localStorage.setItem('axiomify_user', JSON.stringify(newUser));
-      setUser(newUser);
       
-      // If there's a referral code, show success message
+      // Check if phone number is already used
+      if (additionalData?.phone) {
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('phone', additionalData.phone)
+          .single();
+        
+        if (existingUser) {
+          throw new Error('Phone number is already registered');
+        }
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            phone: additionalData?.phone,
+            country: additionalData?.country,
+            referral_code: additionalData?.referralCode
+          }
+        }
+      });
+
+      if (error) throw error;
+
       if (additionalData?.referralCode) {
-        console.log(`User signed up with referral code: ${additionalData.referralCode}`);
+        toast.success(`Account created with referral code: ${additionalData.referralCode}`);
+      } else {
+        toast.success('Account created successfully! Please check your email for verification.');
       }
       
       navigate('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error);
+      toast.error(error.message || 'Signup failed');
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('axiomify_user');
-    setUser(null);
-    navigate('/');
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Google sign in error:', error);
+      toast.error(error.message || 'Google sign in failed');
+      throw error;
+    }
   };
 
-  const updateUserProfile = (updates: Partial<UserType>) => {
-    if (!user) return;
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      setUser(null);
+      setSession(null);
+      navigate('/');
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      toast.error(error.message || 'Logout failed');
+    }
+  };
 
-    const updatedUser = { ...user, ...updates };
-    localStorage.setItem('axiomify_user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
+  const updateUserProfile = async (updates: Partial<UserType>) => {
+    if (!user || !session) return;
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          name: updates.name,
+          phone: updates.phone,
+          country: updates.country,
+          currency: updates.currency,
+          currency_symbol: updates.currencySymbol,
+          two_factor_enabled: updates.twoFactorEnabled,
+          profile_image_url: updates.profileImageUrl,
+          passport_url: updates.passportUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setUser({ ...user, ...updates });
+      toast.success('Profile updated successfully');
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+      toast.error(error.message || 'Failed to update profile');
+    }
   };
 
   const updateUser = async (updatedUser: UserType) => {
-    localStorage.setItem('axiomify_user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
+    await updateUserProfile(updatedUser);
   };
 
   const updatePassword = async (currentPassword: string, newPassword: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return Promise.resolve();
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+      toast.success('Password updated successfully');
+    } catch (error: any) {
+      console.error('Update password error:', error);
+      toast.error(error.message || 'Failed to update password');
+      throw error;
+    }
   };
 
   const verifyEmail = async (token: string): Promise<boolean> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return Promise.resolve(!!token);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: token,
+        type: 'email'
+      });
+
+      if (error) throw error;
+      return true;
+    } catch (error: any) {
+      console.error('Email verification error:', error);
+      return false;
+    }
   };
 
   const sendEmailVerification = async (email: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return Promise.resolve();
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email
+      });
+
+      if (error) throw error;
+      toast.success('Verification email sent');
+    } catch (error: any) {
+      console.error('Send verification error:', error);
+      toast.error(error.message || 'Failed to send verification email');
+    }
   };
 
   const updateCurrency = (currency: string, symbol: string) => {
-    if (!user) return;
-    
-    const updatedUser = { 
-      ...user, 
-      currency, 
-      currencySymbol: symbol 
-    };
-    localStorage.setItem('axiomify_user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
+    updateUserProfile({ currency, currencySymbol: symbol });
   };
 
   const enableTwoFactor = async (code: string): Promise<boolean> => {
+    // Mock implementation - would integrate with actual 2FA service
     await new Promise((resolve) => setTimeout(resolve, 1000));
     if (code.length === 6) {
-      updateUserProfile({ twoFactorEnabled: true });
+      await updateUserProfile({ twoFactorEnabled: true });
       return true;
     }
     return false;
   };
 
   const disableTwoFactor = async (code: string): Promise<boolean> => {
+    // Mock implementation - would integrate with actual 2FA service
     await new Promise((resolve) => setTimeout(resolve, 1000));
     if (code.length === 6) {
-      updateUserProfile({ twoFactorEnabled: false });
+      await updateUserProfile({ twoFactorEnabled: false });
       return true;
     }
     return false;
@@ -241,10 +367,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const terminateSession = async (sessionId: string) => {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    if (user?.sessions) {
-      const updatedSessions = user.sessions.filter(s => s.id !== sessionId);
-      updateUserProfile({ sessions: updatedSessions });
-    }
+    // Implementation would terminate specific session
   };
 
   return (
@@ -253,6 +376,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       loading, 
       isLoading: loading,
       isAuthenticated,
+      session,
       login, 
       signup, 
       logout, 
@@ -265,7 +389,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       enableTwoFactor,
       disableTwoFactor,
       getSessions,
-      terminateSession
+      terminateSession,
+      signInWithGoogle
     }}>
       {children}
     </AuthContext.Provider>

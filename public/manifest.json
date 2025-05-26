@@ -2,11 +2,15 @@
 {
   "name": "Axiomify - P2P Investment Platform",
   "short_name": "Axiomify",
-  "description": "A peer-to-peer investment platform with short-term, high-yield opportunities.",
+  "description": "A secure peer-to-peer investment platform with high-yield opportunities and real-time matching.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#0EA5E9",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "business"],
+  "lang": "en",
+  "scope": "/",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -19,6 +23,40 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your investment dashboard",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "short_name": "Wallet",
+      "description": "Manage your wallet",
+      "url": "/wallet",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "form_factor": "wide"
     }
   ]
 }

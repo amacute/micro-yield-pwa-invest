@@ -10,7 +10,7 @@ import { Loader } from '@/components/common/Loader';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, isLoading } = useAuth();
+  const { login, signInWithGoogle, isLoading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +77,12 @@ export default function Login() {
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" type="button" disabled={isLoading}>
+              <Button 
+                variant="outline" 
+                type="button" 
+                disabled={isLoading}
+                onClick={signInWithGoogle}
+              >
                 Google
               </Button>
               <Button variant="outline" type="button" disabled={isLoading}>

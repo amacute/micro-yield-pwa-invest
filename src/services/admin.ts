@@ -50,6 +50,42 @@ export const createInvestment = async (investment: any) => {
   return data?.[0] || null;
 };
 
+// P2P User Matching - Updated to work with real users
+export const fetchAvailableUsers = async () => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .order('wallet_balance', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching available users:', error);
+    toast.error('Failed to load users');
+    return [];
+  }
+  
+  return data || [];
+};
+
+// Create P2P payment using the database function
+export const createUserMatch = async (payerId: string, payeeId: string, amount: number, purpose?: string) => {
+  const { data, error } = await supabase
+    .rpc('create_p2p_payment', {
+      payer_user_id: payerId,
+      payee_user_id: payeeId,
+      payment_amount: amount,
+      payment_purpose: purpose
+    });
+  
+  if (error) {
+    console.error('Error creating user match:', error);
+    toast.error('Failed to create payment match');
+    return { success: false, message: error.message };
+  }
+  
+  toast.success('Payment match created successfully');
+  return data;
+};
+
 // P2P Loans
 export const fetchPendingLoans = async () => {
   const { data, error } = await supabase
@@ -112,36 +148,56 @@ export const createP2PMatch = async (loanId: string, investorMatches: { id: stri
 export const fetchAnalyticsData = async () => {
   try {
     // User stats
-    const totalUsersResult = await supabase.from('users').select('count').single();
-    const verifiedUsersResult = await supabase.from('users').select('count').eq('kyc_verified', true).single();
+    const { count: totalUsers } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true });
+    
+    const { count: verifiedUsers } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('kyc_verified', true);
     
     // Investment stats
-    const totalInvestmentsResult = await supabase.from('investments').select('count').single();
-    const totalRaisedResult = await supabase.from('investments').select('sum(raised)').single();
+    const { count: totalInvestments } = await supabase
+      .from('investments')
+      .select('*', { count: 'exact', head: true });
+    
+    const { data: investmentSum } = await supabase
+      .from('investments')
+      .select('raised');
+    
+    const totalRaised = investmentSum?.reduce((sum, inv) => sum + (inv.raised || 0), 0) || 0;
     
     // P2P stats
-    const totalLoansResult = await supabase.from('p2p_loans').select('count').single();
-    const totalFundedLoansResult = await supabase.from('p2p_loans').select('sum(amount)').eq('status', 'funded').single();
+    const { count: totalLoans } = await supabase
+      .from('p2p_loans')
+      .select('*', { count: 'exact', head: true });
+    
+    const { data: fundedLoans } = await supabase
+      .from('p2p_loans')
+      .select('amount')
+      .eq('status', 'funded');
+    
+    const totalFunded = fundedLoans?.reduce((sum, loan) => sum + (loan.amount || 0), 0) || 0;
     
     return {
       userStats: {
-        total: totalUsersResult.data?.count || 0,
-        verified: verifiedUsersResult.data?.count || 0
+        total: totalUsers || 0,
+        verified: verifiedUsers || 0
       },
       investmentStats: {
-        total: totalInvestmentsResult.data?.count || 0,
-        raised: totalRaisedResult.data?.sum || 0
+        total: totalInvestments || 0,
+        raised: totalRaised
       },
       loanStats: {
-        total: totalLoansResult.data?.count || 0,
-        funded: totalFundedLoansResult.data?.sum || 0
+        total: totalLoans || 0,
+        funded: totalFunded
       }
     };
   } catch (error) {
     console.error('Error fetching analytics data:', error);
     toast.error('Failed to load analytics data');
     
-    // Return default values in case of error
     return {
       userStats: { total: 0, verified: 0 },
       investmentStats: { total: 0, raised: 0 },

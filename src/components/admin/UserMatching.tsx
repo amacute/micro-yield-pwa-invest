@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { fetchUsers } from '@/services/admin';
+import { fetchAvailableUsers, createUserMatch } from '@/services/admin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,10 +15,11 @@ export function UserMatching() {
   const [selectedPayee, setSelectedPayee] = useState<any>(null);
   const [transferAmount, setTransferAmount] = useState<number>(0);
   const [transferPurpose, setTransferPurpose] = useState<string>('');
+  const [processing, setProcessing] = useState(false);
   
   useEffect(() => {
     const loadUsers = async () => {
-      const data = await fetchUsers();
+      const data = await fetchAvailableUsers();
       setUsers(data);
       setLoading(false);
     };
@@ -32,7 +33,7 @@ export function UserMatching() {
       return;
     }
     
-    if (selectedPayer.id === selectedPayee.id) {
+    if (selectedPayer.user_id === selectedPayee.user_id) {
       toast.error('Payer and payee cannot be the same user');
       return;
     }
@@ -48,30 +49,33 @@ export function UserMatching() {
     }
     
     try {
-      // Simulate API call to create the match
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setProcessing(true);
       
-      // Update local state to reflect the transfer
-      const updatedUsers = users.map(user => {
-        if (user.id === selectedPayer.id) {
-          return { ...user, wallet_balance: user.wallet_balance - transferAmount };
-        }
-        if (user.id === selectedPayee.id) {
-          return { ...user, wallet_balance: user.wallet_balance + transferAmount };
-        }
-        return user;
-      });
+      const result = await createUserMatch(
+        selectedPayer.user_id,
+        selectedPayee.user_id,
+        transferAmount,
+        transferPurpose || 'Admin P2P Payment'
+      );
       
-      setUsers(updatedUsers);
-      setSelectedPayer(null);
-      setSelectedPayee(null);
-      setTransferAmount(0);
-      setTransferPurpose('');
-      
-      toast.success(`Successfully matched ${selectedPayer.name || selectedPayer.email} to pay $${transferAmount} to ${selectedPayee.name || selectedPayee.email}`);
+      if (result.success) {
+        // Refresh users data
+        const data = await fetchAvailableUsers();
+        setUsers(data);
+        
+        // Reset form
+        setSelectedPayer(null);
+        setSelectedPayee(null);
+        setTransferAmount(0);
+        setTransferPurpose('');
+        
+        toast.success(`Successfully matched ${selectedPayer.name || selectedPayer.email} to pay $${transferAmount} to ${selectedPayee.name || selectedPayee.email}`);
+      }
     } catch (error) {
       console.error('Error creating user match:', error);
       toast.error('Failed to create user match');
+    } finally {
+      setProcessing(false);
     }
   };
   
@@ -118,7 +122,7 @@ export function UserMatching() {
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="outline">{selectedPayer.name || selectedPayer.email}</Badge>
                     <span className="text-sm text-muted-foreground">
-                      Balance: ${selectedPayer.wallet_balance.toFixed(2)}
+                      Balance: ${Number(selectedPayer.wallet_balance).toFixed(2)}
                     </span>
                   </div>
                 ) : (
@@ -133,7 +137,7 @@ export function UserMatching() {
                 {selectedPayee ? (
                   <div className="flex items-center justify-end gap-2 mt-1">
                     <span className="text-sm text-muted-foreground">
-                      Balance: ${selectedPayee.wallet_balance.toFixed(2)}
+                      Balance: ${Number(selectedPayee.wallet_balance).toFixed(2)}
                     </span>
                     <Badge variant="outline">{selectedPayee.name || selectedPayee.email}</Badge>
                   </div>
@@ -168,10 +172,14 @@ export function UserMatching() {
             <Button 
               className="w-full mt-4"
               onClick={handleCreateMatch}
-              disabled={!selectedPayer || !selectedPayee || transferAmount <= 0}
+              disabled={!selectedPayer || !selectedPayee || transferAmount <= 0 || processing}
             >
-              <DollarSign className="h-4 w-4 mr-2" />
-              Create Payment Match
+              {processing ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <DollarSign className="h-4 w-4 mr-2" />
+              )}
+              {processing ? 'Processing...' : 'Create Payment Match'}
             </Button>
           </CardContent>
         </Card>
@@ -183,8 +191,8 @@ export function UserMatching() {
           <Card 
             key={user.id} 
             className={`cursor-pointer transition-all ${
-              selectedPayer?.id === user.id ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950' :
-              selectedPayee?.id === user.id ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-950' :
+              selectedPayer?.user_id === user.user_id ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950' :
+              selectedPayee?.user_id === user.user_id ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-950' :
               'hover:shadow-md'
             }`}
           >
@@ -193,9 +201,12 @@ export function UserMatching() {
                 <div>
                   <h3 className="font-medium">{user.name || "Unnamed User"}</h3>
                   <p className="text-sm text-muted-foreground">{user.email}</p>
+                  {user.phone && (
+                    <p className="text-xs text-muted-foreground">{user.phone}</p>
+                  )}
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">${user.wallet_balance.toFixed(2)}</p>
+                  <p className="font-medium">${Number(user.wallet_balance).toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">Balance</p>
                 </div>
               </div>
@@ -208,17 +219,17 @@ export function UserMatching() {
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    variant={selectedPayer?.id === user.id ? "default" : "outline"}
-                    onClick={() => setSelectedPayer(selectedPayer?.id === user.id ? null : user)}
-                    disabled={selectedPayee?.id === user.id}
+                    variant={selectedPayer?.user_id === user.user_id ? "default" : "outline"}
+                    onClick={() => setSelectedPayer(selectedPayer?.user_id === user.user_id ? null : user)}
+                    disabled={selectedPayee?.user_id === user.user_id}
                   >
                     Payer
                   </Button>
                   <Button
                     size="sm"
-                    variant={selectedPayee?.id === user.id ? "default" : "outline"}
-                    onClick={() => setSelectedPayee(selectedPayee?.id === user.id ? null : user)}
-                    disabled={selectedPayer?.id === user.id}
+                    variant={selectedPayee?.user_id === user.user_id ? "default" : "outline"}
+                    onClick={() => setSelectedPayee(selectedPayee?.user_id === user.user_id ? null : user)}
+                    disabled={selectedPayer?.user_id === user.user_id}
                   >
                     Payee
                   </Button>

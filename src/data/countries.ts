@@ -74,3 +74,6 @@ export const otherCountries = [
 ];
 
 export const allCountries = [...africanCountries, ...otherCountries];
+
+// Also export as 'countries' for backward compatibility
+export const countries = allCountries;

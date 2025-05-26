@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader } from '@/components/common/Loader';
-import { countries } from '@/data/countries';
+import { allCountries } from '@/data/countries';
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -136,7 +135,7 @@ export default function Signup() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {countries.map((country) => (
+                  {allCountries.map((country) => (
                     <SelectItem key={country.code} value={country.code}>
                       {country.name}
                     </SelectItem>

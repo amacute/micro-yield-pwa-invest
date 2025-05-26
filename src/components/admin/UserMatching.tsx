@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { fetchAvailableUsers, createUserMatch } from '@/services/admin';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Users, ArrowRight, DollarSign } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
+
+interface ApiResponse {
+  success: boolean;
+  message?: string;
+}
 
 export function UserMatching() {
   const [users, setUsers] = useState<any[]>([]);
@@ -56,7 +60,7 @@ export function UserMatching() {
         selectedPayee.user_id,
         transferAmount,
         transferPurpose || 'Admin P2P Payment'
-      );
+      ) as ApiResponse;
       
       if (result.success) {
         // Refresh users data

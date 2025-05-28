@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { fetchAvailableUsers } from '@/services/admin';
 import { Button } from '@/components/ui/button';
@@ -273,7 +272,7 @@ export function UserMatching() {
       {users.length === 0 && (
         <div className="text-center py-8 border rounded-lg">
           <p className="text-muted-foreground">No eligible users found. Users must make a deposit before participating in P2P lending.</p>
-        </CardContent>
+        </div>
       )}
     </div>
   );

@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String      @id @default(cuid())
+  name          String?
+  email         String?     @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  kycVerified   Boolean     @default(false)
+  kycLevel      String      @default("NONE")
+  kycVerifiedAt DateTime?
+  investmentLimit Float      @default(1000)
+  verifications KYCVerification[]
+  verificationAttempts KYCVerificationAttempt[]
+}
+
+model KYCVerification {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  documentType    String
+  verificationLevel String
+  status          String    @default("PENDING")
+  documentUrl     String
+  personalInfo    Json
+  rejectionReason String?
+  createdAt       DateTime  @default(now())
+  reviewedAt      DateTime?
+  attempts        KYCVerificationAttempt[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model KYCVerificationAttempt {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  verificationId  String
+  verification    KYCVerification @relation(fields: [verificationId], references: [id])
+  ipAddress       String
+  userAgent       String
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@index([verificationId])
+  @@index([createdAt])
+} 

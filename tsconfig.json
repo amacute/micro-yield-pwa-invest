@@ -9,7 +9,7 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "emitDeclarationOnly": true
     "jsx": "react-jsx",
     "strict": true,
     "noUnusedLocals": true,
@@ -25,5 +25,7 @@
   },
   "include": ["src"],
   "exclude": ["vite.config.ts"],
-  "references": [{ "path": "./tsconfig.node.json" }]
-}
+  "references": [
+  { "path": "./tsconfig.local.json" }
+]
+

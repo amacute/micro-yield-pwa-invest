@@ -1,3 +1,4 @@
+
 /// <reference types="vite/client" />
 /// <reference types="vite-plugin-pwa/client" />
 
@@ -100,12 +101,12 @@ export default defineConfig({
     include: ['react', 'react-dom', 'react-router-dom', '@supabase/supabase-js']
   },
   server: {
-    port: 3000,
+    port: 8080,
     strictPort: true,
     host: true
   },
   preview: {
-    port: 3000,
+    port: 8080,
     strictPort: true,
     host: true
   }

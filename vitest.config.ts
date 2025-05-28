@@ -11,6 +11,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  esbuild: {
+    target: 'esnext',
+    format: 'esm'
+  },
   test: {
     globals: true,
     environment: 'jsdom',

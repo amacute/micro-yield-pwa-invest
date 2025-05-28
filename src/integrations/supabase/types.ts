@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      investment_accounts: {
+        Row: {
+          account_number: string
+          account_type: string
+          created_at: string | null
+          id: number
+          user_id: string
+        }
+        Insert: {
+          account_number: string
+          account_type: string
+          created_at?: string | null
+          id?: never
+          user_id: string
+        }
+        Update: {
+          account_number?: string
+          account_type?: string
+          created_at?: string | null
+          id?: never
+          user_id?: string
+        }
+        Relationships: []
+      }
       investments: {
         Row: {
           category: string
@@ -101,6 +125,36 @@ export type Database = {
           },
         ]
       }
+      p2p_lending_offers: {
+        Row: {
+          amount: number
+          created_at: string | null
+          duration: number
+          id: number
+          interest_rate: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          duration: number
+          id?: never
+          interest_rate: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          duration?: number
+          id?: never
+          interest_rate?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       p2p_loans: {
         Row: {
           amount: number
@@ -134,6 +188,86 @@ export type Database = {
           risk?: string
           status?: string
           term?: number
+        }
+        Relationships: []
+      }
+      p2p_matches: {
+        Row: {
+          borrower_id: string | null
+          id: number
+          matched_amount: number
+          matched_at: string | null
+          offer_id: number | null
+        }
+        Insert: {
+          borrower_id?: string | null
+          id?: never
+          matched_amount: number
+          matched_at?: string | null
+          offer_id?: number | null
+        }
+        Update: {
+          borrower_id?: string | null
+          id?: never
+          matched_amount?: number
+          matched_at?: string | null
+          offer_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2p_matches_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "p2p_lending_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2p_matching: {
+        Row: {
+          amount: number
+          borrower_id: string
+          created_at: string | null
+          id: number
+          matched_user_id: string
+        }
+        Insert: {
+          amount: number
+          borrower_id: string
+          created_at?: string | null
+          id?: never
+          matched_user_id: string
+        }
+        Update: {
+          amount?: number
+          borrower_id?: string
+          created_at?: string | null
+          id?: never
+          matched_user_id?: string
+        }
+        Relationships: []
+      }
+      p2p_payment: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: number
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: never
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: never
+          receiver_id?: string
+          sender_id?: string
         }
         Relationships: []
       }
@@ -362,16 +496,19 @@ export type Database = {
         Returns: Json
       }
       create_p2p_payment: {
-        Args: {
-          payer_user_id: string
-          payee_user_id: string
-          payment_amount: number
-          payment_purpose?: string
-        }
+        Args:
+          | {
+              payer_user_id: string
+              payee_user_id: string
+              payment_amount: number
+              payment_purpose?: string
+            }
+          | { referral_code: string; user_id: number }
+          | { sender_id: string; receiver_id: string; amount: number }
         Returns: Json
       }
       is_admin: {
-        Args: { user_id: string }
+        Args: Record<PropertyKey, never> | { user_id: string }
         Returns: boolean
       }
     }

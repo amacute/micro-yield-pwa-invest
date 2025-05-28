@@ -1,3 +1,4 @@
+
 /// <reference types="vite/client" />
 /// <reference types="vite-plugin-pwa/client" />
 
@@ -6,11 +7,13 @@ import react from "@vitejs/plugin-react-swc";
 import { VitePWA } from 'vite-plugin-pwa';
 import path from "path";
 import { compression } from 'vite-plugin-compression2';
+import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
+    mode === 'development' && componentTagger(),
     compression(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -68,11 +71,15 @@ export default defineConfig({
         ]
       }
     })
-  ],
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     }
+  },
+  esbuild: {
+    target: 'esnext',
+    format: 'esm'
   },
   build: {
     target: 'esnext',
@@ -100,13 +107,13 @@ export default defineConfig({
     include: ['react', 'react-dom', 'react-router-dom', '@supabase/supabase-js']
   },
   server: {
-    port: 3000,
-    strictPort: true,
-    host: true
+    host: "::",
+    port: 8080,
+    strictPort: true
   },
   preview: {
-    port: 3000,
-    strictPort: true,
-    host: true
+    host: "::",
+    port: 8080,
+    strictPort: true
   }
-});
+}));

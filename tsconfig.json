@@ -9,7 +9,7 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "emitDeclarationOnly": true
+    "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
     "noUnusedLocals": true,
@@ -24,8 +24,6 @@
     "types": ["vite/client", "vite-plugin-pwa/client"]
   },
   "include": ["src"],
-  "exclude": ["vite.config.ts"],
-  "references": [
-  { "path": "./tsconfig.local.json" }
-]
+  "exclude": ["vite.config.ts"]
+}
 

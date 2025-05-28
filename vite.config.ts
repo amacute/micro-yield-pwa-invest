@@ -77,10 +77,6 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     }
   },
-  esbuild: {
-    target: 'esnext',
-    format: 'esm'
-  },
   build: {
     target: 'esnext',
     outDir: 'dist',

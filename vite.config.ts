@@ -7,13 +7,11 @@ import react from "@vitejs/plugin-react-swc";
 import { VitePWA } from 'vite-plugin-pwa';
 import path from "path";
 import { compression } from 'vite-plugin-compression2';
-import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   plugins: [
     react(),
-    mode === 'development' && componentTagger(),
     compression(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -71,15 +69,11 @@ export default defineConfig(({ mode }) => ({
         ]
       }
     })
-  ].filter(Boolean),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     }
-  },
-  esbuild: {
-    target: 'esnext',
-    format: 'esm'
   },
   build: {
     target: 'esnext',
@@ -107,13 +101,13 @@ export default defineConfig(({ mode }) => ({
     include: ['react', 'react-dom', 'react-router-dom', '@supabase/supabase-js']
   },
   server: {
-    host: "::",
     port: 8080,
-    strictPort: true
+    strictPort: true,
+    host: true
   },
   preview: {
-    host: "::",
     port: 8080,
-    strictPort: true
+    strictPort: true,
+    host: true
   }
-}));
+});

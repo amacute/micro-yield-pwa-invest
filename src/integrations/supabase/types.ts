@@ -125,36 +125,6 @@ export type Database = {
           },
         ]
       }
-      p2p_lending_offers: {
-        Row: {
-          amount: number
-          created_at: string | null
-          duration: number
-          id: number
-          interest_rate: number
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          amount: number
-          created_at?: string | null
-          duration: number
-          id?: never
-          interest_rate: number
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          amount?: number
-          created_at?: string | null
-          duration?: number
-          id?: never
-          interest_rate?: number
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       p2p_loans: {
         Row: {
           amount: number
@@ -190,38 +160,6 @@ export type Database = {
           term?: number
         }
         Relationships: []
-      }
-      p2p_matches: {
-        Row: {
-          borrower_id: string | null
-          id: number
-          matched_amount: number
-          matched_at: string | null
-          offer_id: number | null
-        }
-        Insert: {
-          borrower_id?: string | null
-          id?: never
-          matched_amount: number
-          matched_at?: string | null
-          offer_id?: number | null
-        }
-        Update: {
-          borrower_id?: string | null
-          id?: never
-          matched_amount?: number
-          matched_at?: string | null
-          offer_id?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "p2p_matches_offer_id_fkey"
-            columns: ["offer_id"]
-            isOneToOne: false
-            referencedRelation: "p2p_lending_offers"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       p2p_matching: {
         Row: {

@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { QrCode, Shield, ShieldOff, Copy } from 'lucide-react';
+import { Shield, ShieldOff } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { generateTOTPSecret, generateQRCodeURL, enableTwoFactor, disableTwoFactor } from '@/services/twoFactorAuthReal';
+import { QRCodeDisplay } from './components/QRCodeDisplay';
+import { BackupCodesDisplay } from './components/BackupCodesDisplay';
+import { VerificationCodeInput } from './components/VerificationCodeInput';
 
 interface TwoFactorAuthDialogProps {
   open: boolean;
@@ -89,16 +89,6 @@ export function TwoFactorAuthDialog({ open, onOpenChange }: TwoFactorAuthDialogP
     }
   };
 
-  const copySecret = () => {
-    navigator.clipboard.writeText(secret);
-    toast.success('Secret key copied to clipboard');
-  };
-
-  const copyBackupCodes = () => {
-    navigator.clipboard.writeText(backupCodes.join('\n'));
-    toast.success('Backup codes copied to clipboard');
-  };
-
   const finishSetup = () => {
     setBackupCodes([]);
     onOpenChange(false);
@@ -108,43 +98,12 @@ export function TwoFactorAuthDialog({ open, onOpenChange }: TwoFactorAuthDialogP
   // Show backup codes after successful 2FA setup
   if (backupCodes.length > 0) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-green-600" />
-              Two-Factor Authentication Enabled
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-              <h3 className="font-medium text-yellow-800 mb-2">Important: Save Your Backup Codes</h3>
-              <p className="text-sm text-yellow-700 mb-3">
-                These backup codes can be used to access your account if you lose your authenticator device. 
-                Save them in a secure location.
-              </p>
-              
-              <div className="bg-white border rounded p-3 font-mono text-sm">
-                {backupCodes.map((code, index) => (
-                  <div key={index} className="py-1">{code}</div>
-                ))}
-              </div>
-              
-              <Button variant="outline" onClick={copyBackupCodes} className="mt-3 w-full">
-                <Copy className="h-4 w-4 mr-2" />
-                Copy Backup Codes
-              </Button>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button onClick={finishSetup} className="w-full">
-              I've Saved My Backup Codes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <BackupCodesDisplay
+        open={open}
+        onOpenChange={onOpenChange}
+        backupCodes={backupCodes}
+        onFinish={finishSetup}
+      />
     );
   }
 
@@ -160,52 +119,14 @@ export function TwoFactorAuthDialog({ open, onOpenChange }: TwoFactorAuthDialogP
         
         <div className="space-y-6 py-4">
           {!user?.twoFactorEnabled && (
-            <>
-              <div className="text-center">
-                <Card className="inline-block p-4">
-                  <CardContent className="p-0">
-                    <div className="w-48 h-48 bg-gray-100 rounded flex items-center justify-center">
-                      <QrCode className="h-24 w-24 text-gray-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Scan this QR code with Google Authenticator, Authy, or similar app
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  QR Code URL: {qrCodeUrl}
-                </p>
-              </div>
-
-              <div>
-                <Label>Manual Entry Key</Label>
-                <div className="flex gap-2">
-                  <Input value={secret} readOnly className="font-mono" />
-                  <Button variant="outline" onClick={copySecret}>
-                    Copy
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Use this key if you can't scan the QR code
-                </p>
-              </div>
-            </>
+            <QRCodeDisplay qrCodeUrl={qrCodeUrl} secret={secret} />
           )}
 
-          <div>
-            <Label htmlFor="code">Verification Code</Label>
-            <Input
-              id="code"
-              value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="Enter 6-digit code"
-              maxLength={6}
-              className="font-mono text-center text-lg"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Enter the 6-digit code from your authenticator app
-            </p>
-          </div>
+          <VerificationCodeInput
+            value={verificationCode}
+            onChange={setVerificationCode}
+            disabled={loading}
+          />
 
           {user?.twoFactorEnabled && (
             <div className="bg-red-50 border border-red-200 rounded p-3">

@@ -25,7 +25,7 @@ export type UserType = {
   }>;
 };
 
-interface AdditionalSignupData {
+export interface AdditionalSignupData {
   phone?: string;
   country?: string;
   referralCode?: string;

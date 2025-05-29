@@ -3,12 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { signupUser, signInWithGoogleProvider } from '../services';
-
-interface AdditionalSignupData {
-  phone?: string;
-  country?: string;
-  referralCode?: string;
-}
+import { AdditionalSignupData } from '../types';
 
 export function useAuthSignup(
   setLoading: (loading: boolean) => void
@@ -36,12 +31,15 @@ export function useAuthSignup(
         }
       }
 
-      await signupUser(email, password, {
+      // Create explicit object to avoid type instantiation issues
+      const signupData = {
         full_name: name,
-        phone: additionalData?.phone,
-        country: additionalData?.country,
-        referral_code: additionalData?.referralCode
-      });
+        phone: additionalData?.phone || undefined,
+        country: additionalData?.country || undefined,
+        referral_code: additionalData?.referralCode || undefined
+      };
+
+      await signupUser(email, password, signupData);
 
       if (additionalData?.referralCode) {
         toast.success(`Account created with referral code: ${additionalData.referralCode}`);

@@ -104,43 +104,16 @@ export const fetchAvailableInvestors = async () => {
   return data || [];
 };
 
-// Create P2P match - simplified without RPC
-export const createP2PMatch = async (loanId: string, investors: { id: string, amount: number }[]) => {
-  try {
-    // Create matches directly in the p2p_matches table
-    const matches = investors.map(investor => ({
-      loan_id: loanId,
-      investor_id: investor.id,
-      amount: investor.amount,
-      status: 'active'
-    }));
-
-    const { data, error } = await supabase
-      .from('p2p_matches')
-      .insert(matches)
-      .select();
-    
-    if (error) throw error;
-    
-    toast.success('P2P match created successfully');
-    return { success: true, data };
-  } catch (error) {
-    console.error('Error creating P2P match:', error);
-    toast.error('Failed to create P2P match');
-    return { success: false, error };
-  }
-};
-
-// Create P2P payment directly
+// Create P2P payment directly using correct column names
 export const createLendingMatch = async (lenderId: string, borrowerId: string, amount: number, purpose?: string) => {
   try {
     const { data, error } = await supabase
       .from('p2p_payments')
       .insert({
-        payer_user_id: lenderId,
-        payee_user_id: borrowerId,
-        payment_amount: amount,
-        payment_purpose: purpose || 'P2P Loan',
+        payer_id: lenderId,
+        payee_id: borrowerId,
+        amount: amount,
+        purpose: purpose || 'P2P Loan',
         status: 'completed'
       })
       .select()
@@ -220,8 +193,8 @@ export const fetchLendingMatches = async () => {
     .from('p2p_payments')
     .select(`
       *,
-      lender:users!p2p_payments_payer_user_id_fkey(name, email),
-      borrower:users!p2p_payments_payee_user_id_fkey(name, email)
+      lender:users!p2p_payments_payer_id_fkey(name, email),
+      borrower:users!p2p_payments_payee_id_fkey(name, email)
     `)
     .order('created_at', { ascending: false });
   
@@ -270,9 +243,9 @@ export const fetchAnalyticsData = async () => {
     
     const { data: p2pVolume } = await supabase
       .from('p2p_payments')
-      .select('payment_amount');
+      .select('amount');
     
-    const totalP2PVolume = p2pVolume?.reduce((sum, payment) => sum + (payment.payment_amount || 0), 0) || 0;
+    const totalP2PVolume = p2pVolume?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
     
     return {
       userStats: {

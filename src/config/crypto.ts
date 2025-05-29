@@ -10,10 +10,11 @@ interface CryptoConfig {
 }
 
 // These are placeholder addresses - should be replaced with actual secure addresses
+// In Vite, environment variables are accessed via import.meta.env
 const CRYPTO_ADDRESSES: CryptoConfig = {
-  bitcoin: process.env.VITE_BITCOIN_ADDRESS || 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-  ethereum: process.env.VITE_ETHEREUM_ADDRESS || '0x742d35Cc6635C0532925a3b8D098320C00000000',
-  litecoin: process.env.VITE_LITECOIN_ADDRESS || 'LTC1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
+  bitcoin: import.meta.env.VITE_BITCOIN_ADDRESS || 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+  ethereum: import.meta.env.VITE_ETHEREUM_ADDRESS || '0x742d35Cc6635C0532925a3b8D098320C00000000',
+  litecoin: import.meta.env.VITE_LITECOIN_ADDRESS || 'LTC1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
 };
 
 export const getCryptoAddress = (currency: string): string => {

@@ -49,14 +49,14 @@ export function useUserMatching() {
     try {
       setProcessing(true);
       
-      // Create a P2P payment record
+      // Create a P2P payment record using correct column names
       const { data, error } = await supabase
         .from('p2p_payments')
         .insert({
-          payer_user_id: selectedLender.user_id,
-          payee_user_id: selectedBorrower.user_id,
-          payment_amount: loanAmount,
-          payment_purpose: loanPurpose || 'P2P Loan',
+          payer_id: selectedLender.user_id,
+          payee_id: selectedBorrower.user_id,
+          amount: loanAmount,
+          purpose: loanPurpose || 'P2P Loan',
           status: 'completed'
         })
         .select()

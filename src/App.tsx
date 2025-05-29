@@ -49,7 +49,7 @@ function App() {
                 <Route path="/terms" element={<TermsAndConditions />} />
                 
                 {/* Protected routes with layout */}
-                <Route element={<Layout />}>
+                <Route path="/*" element={<Layout />}>
                   <Route path="index" element={<Index />} />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="profile" element={<Profile />} />

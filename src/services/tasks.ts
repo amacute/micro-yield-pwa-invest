@@ -84,14 +84,16 @@ export const fetchUserTasks = async (userId: string): Promise<UserTask[]> => {
 
 // Start a task (user clicks to begin)
 export const startTask = async (userId: string, taskId: string) => {
-  // Create a user_investment record as placeholder
+  // Create a user_investment record as placeholder with required fields
   const { data, error } = await supabase
     .from('user_investments')
     .insert({
       user_id: userId,
       investment_id: taskId,
       amount: 5.00,
-      status: 'pending'
+      status: 'pending',
+      end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      expected_return: 5.00
     })
     .select()
     .single();
@@ -237,7 +239,7 @@ export const rejectTask = async (userTaskId: string, reason?: string) => {
 
 // Admin task management
 export const createTask = async (taskData: Omit<Task, 'id' | 'created_at'>) => {
-  // Create as investment for demo purposes
+  // Create as investment for demo purposes with all required fields
   const { data, error } = await supabase
     .from('investments')
     .insert({
@@ -249,7 +251,10 @@ export const createTask = async (taskData: Omit<Task, 'id' | 'created_at'>) => {
       goal: taskData.reward_amount * 100,
       category: 'Task',
       end_time: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-      creator_id: 'admin'
+      creator_id: 'admin',
+      return_rate: 0, // Required field
+      risk: 'low', // Required field
+      status: 'active' // Required field
     })
     .select()
     .single();

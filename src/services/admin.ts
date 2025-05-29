@@ -23,7 +23,7 @@ export const fetchAvailableUsers = async () => {
   const { data, error } = await supabase
     .from('users')
     .select('*')
-    .not('last_deposit_time', 'is', null)
+    .gt('wallet_balance', 0)
     .order('wallet_balance', { ascending: false });
   
   if (error) {
@@ -104,13 +104,14 @@ export const fetchAvailableInvestors = async () => {
   return data || [];
 };
 
+// Create P2P match using available database functions
 export const createP2PMatch = async (loanId: string, investors: { id: string, amount: number }[]) => {
   try {
+    // Use the available create_p2p_match function
     const { data, error } = await supabase
-      .rpc('create_p2p_investment_match', {
+      .rpc('create_p2p_match', {
         loan_id: loanId,
-        investor_ids: investors.map(inv => inv.id),
-        amounts: investors.map(inv => inv.amount)
+        investor_data: investors
       });
     
     if (error) throw error;
@@ -124,24 +125,26 @@ export const createP2PMatch = async (loanId: string, investors: { id: string, am
   }
 };
 
-// Create P2P lending match using the database function
+// Create P2P payment directly
 export const createLendingMatch = async (lenderId: string, borrowerId: string, amount: number, purpose?: string) => {
-  const { data, error } = await supabase
-    .rpc('create_lending_match', {
-      p_lender_id: lenderId,
-      p_borrower_id: borrowerId,
-      p_amount: amount,
-      p_purpose: purpose
-    });
-  
-  if (error) {
+  try {
+    const { data, error } = await supabase
+      .rpc('create_p2p_payment', {
+        from_user_id: lenderId,
+        to_user_id: borrowerId,
+        amount: amount,
+        purpose: purpose || 'P2P Loan'
+      });
+    
+    if (error) throw error;
+    
+    toast.success('Lending match created successfully');
+    return { success: true, data };
+  } catch (error) {
     console.error('Error creating lending match:', error);
     toast.error('Failed to create lending match');
-    return { success: false, message: error.message };
+    return { success: false, error };
   }
-  
-  toast.success('Lending match created successfully');
-  return data;
 };
 
 // Deposit management
@@ -163,22 +166,34 @@ export const fetchDeposits = async () => {
   return data || [];
 };
 
+// Simple deposit approval without RPC function
 export const approveDeposit = async (depositId: string, amount: number, userId: string) => {
-  const { error } = await supabase
-    .rpc('approve_deposit', {
-      deposit_id: depositId,
-      deposit_amount: amount,
-      user_id: userId
-    });
-  
-  if (error) {
+  try {
+    // Update the deposit status
+    const { error: depositError } = await supabase
+      .from('user_investments')
+      .update({ status: 'approved' })
+      .eq('id', depositId);
+    
+    if (depositError) throw depositError;
+    
+    // Update user wallet balance
+    const { error: walletError } = await supabase
+      .from('users')
+      .update({ 
+        wallet_balance: supabase.sql`wallet_balance + ${amount}`
+      })
+      .eq('user_id', userId);
+    
+    if (walletError) throw walletError;
+    
+    toast.success('Deposit approved successfully');
+    return true;
+  } catch (error) {
     console.error('Error approving deposit:', error);
     toast.error('Failed to approve deposit');
     return false;
   }
-  
-  toast.success('Deposit approved successfully');
-  return true;
 };
 
 // Lending matches management
@@ -214,10 +229,10 @@ export const fetchAnalyticsData = async () => {
       .select('*', { count: 'exact', head: true })
       .eq('kyc_verified', true);
     
-    const { count: usersWithDeposits } = await supabase
+    const { count: usersWithBalance } = await supabase
       .from('users')
       .select('*', { count: 'exact', head: true })
-      .not('last_deposit_time', 'is', null);
+      .gt('wallet_balance', 0);
     
     // Investment stats
     const { count: totalInvestments } = await supabase
@@ -245,7 +260,7 @@ export const fetchAnalyticsData = async () => {
       userStats: {
         total: totalUsers || 0,
         verified: verifiedUsers || 0,
-        withDeposits: usersWithDeposits || 0
+        withDeposits: usersWithBalance || 0
       },
       depositStats: {
         total: totalInvestments || 0,

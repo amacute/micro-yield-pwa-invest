@@ -30,10 +30,10 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
   const [adminLevel, setAdminLevel] = useState<'admin' | 'super_admin' | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // List of admin user IDs (you can modify this list)
+  // List of admin user IDs - Updated with your admin ID
   const adminUserIds = [
-    // Add your admin user IDs here
-    // Example: 'user-uuid-1', 'user-uuid-2'
+    '6d432c28038d77b50025adad10f0e824', // Your admin ID
+    // Add more admin user IDs here as needed
   ];
 
   const checkAdminStatus = async () => {
@@ -45,7 +45,7 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
     }
 
     try {
-      // Simple check: if user ID is in the admin list
+      // Check if user ID is in the admin list
       const userIsAdmin = adminUserIds.includes(user.id);
       
       if (userIsAdmin) {

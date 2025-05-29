@@ -54,6 +54,10 @@ create policy "Users can update own profile"
   on profiles for update
   using (auth.uid() = id);
 
+create policy "System can create user profile"
+  on profiles for insert
+  with check (true);
+
 -- Investments policies
 create policy "Users can view own investments"
   on investments for select

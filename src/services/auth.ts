@@ -33,9 +33,9 @@ class AuthService {
 
   async getUserProfile(userId: string) {
     const { data, error } = await this.supabase
-      .from('user_profiles')
+      .from('profiles')
       .select('*')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .single()
 
     if (error) throw error
@@ -44,9 +44,9 @@ class AuthService {
 
   async updateUserProfile(userId: string, updates: Partial<UserProfile>) {
     const { data, error } = await this.supabase
-      .from('user_profiles')
+      .from('profiles')
       .update(updates)
-      .eq('user_id', userId)
+      .eq('id', userId)
       .select()
       .single()
 

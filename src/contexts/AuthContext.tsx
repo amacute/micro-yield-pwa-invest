@@ -138,6 +138,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(true);
       setError(null);
 
+      console.log('Starting registration process...');
+      
       // Create auth user with metadata
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -149,12 +151,34 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Registration error:', error);
+        throw error;
+      }
+
+      console.log('Auth signup successful:', data);
 
       if (data.user) {
+        // Wait a moment for the trigger to complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Verify profile creation
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (profileError) {
+          console.error('Profile verification error:', profileError);
+        } else {
+          console.log('Profile created successfully:', profile);
+        }
+
         navigate('/verify-email');
       }
     } catch (error) {
+      console.error('Registration process error:', error);
       setError(error.message);
       throw error;
     } finally {

@@ -51,14 +51,15 @@ export function DepositOptions() {
       // Generate reference number
       const referenceNumber = `DEP${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-      // For now, we'll simulate file upload and create deposit record
+      // Create a transaction record instead of deposits
       const { data, error } = await supabase
-        .from('deposits')
+        .from('transactions')
         .insert({
           user_id: user?.id,
           amount: parseFloat(amount),
-          reference_number: referenceNumber,
-          status: 'pending'
+          type: 'deposit',
+          status: 'pending',
+          description: `Bank deposit - ${referenceNumber}`
         });
 
       if (error) throw error;

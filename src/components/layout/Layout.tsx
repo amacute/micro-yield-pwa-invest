@@ -2,6 +2,7 @@
 import { ReactNode, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Header } from './Header';
 import { Navbar } from './Navbar';
 import { Loader } from '@/components/common/Loader';
@@ -12,10 +13,12 @@ import { CustomerCareChat } from '@/components/support/CustomerCareChat';
 interface LayoutProps {
   children: ReactNode;
   requireAuth?: boolean;
+  requireAdmin?: boolean;
 }
 
-export function Layout({ children, requireAuth = false }: LayoutProps) {
+export function Layout({ children, requireAuth = false, requireAdmin = false }: LayoutProps) {
   const { isAuthenticated, isLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const location = useLocation();
 
   useEffect(() => {
@@ -35,7 +38,7 @@ export function Layout({ children, requireAuth = false }: LayoutProps) {
   }, []);
 
   // Show loader while checking authentication status
-  if (isLoading) {
+  if (isLoading || (requireAdmin && adminLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader />
@@ -46,6 +49,11 @@ export function Layout({ children, requireAuth = false }: LayoutProps) {
   // If auth is required but user is not authenticated, redirect to login
   if (requireAuth && !isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // If admin is required but user is not admin, redirect to dashboard
+  if (requireAdmin && (!isAuthenticated || !isAdmin)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   // If user is authenticated and tries to access auth pages, redirect to dashboard

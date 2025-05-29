@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Copy, Users, DollarSign, TrendingUp, Share2 } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 interface ReferralData {
   id: string;
@@ -26,93 +25,21 @@ export function ReferralSystem() {
     pendingCommissions: 0
   });
   const [recentReferrals, setRecentReferrals] = useState<ReferralData[]>([]);
-  const [userReferralCode, setUserReferralCode] = useState<string>('');
   
+  // Generate a simple referral code based on user ID
+  const userReferralCode = user ? `REF${user.id.slice(-8).toUpperCase()}` : '';
   const referralLink = userReferralCode ? `${window.location.origin}/signup?ref=${userReferralCode}` : '';
 
   useEffect(() => {
-    if (user) {
-      loadUserReferralCode();
-      loadReferralData();
-    }
+    // For now, we'll use mock data since the referral system tables don't exist yet
+    setReferralStats({
+      totalReferrals: 0,
+      totalEarnings: 0,
+      monthlyEarnings: 0,
+      pendingCommissions: 0
+    });
+    setRecentReferrals([]);
   }, [user]);
-
-  const loadUserReferralCode = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('referral_code')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error loading referral code:', error);
-        return;
-      }
-
-      if (data?.referral_code) {
-        setUserReferralCode(data.referral_code);
-      }
-    } catch (error) {
-      console.error('Error loading referral code:', error);
-    }
-  };
-
-  const loadReferralData = async () => {
-    if (!user) return;
-
-    try {
-      // Get referrals made by this user
-      const { data: referrals, error } = await supabase
-        .from('referrals')
-        .select(`
-          id,
-          referee_id,
-          commission_amount,
-          created_at,
-          users!referrals_referee_id_fkey(name, email)
-        `)
-        .eq('referrer_id', user.id);
-
-      if (error) {
-        console.error('Error loading referral data:', error);
-        return;
-      }
-
-      const referralData = referrals || [];
-      
-      // Calculate stats
-      const totalReferrals = referralData.length;
-      const totalEarnings = referralData.reduce((sum, ref) => sum + (ref.commission_amount || 0), 0);
-      const currentMonth = new Date().getMonth();
-      const monthlyReferrals = referralData.filter(ref => 
-        new Date(ref.created_at).getMonth() === currentMonth
-      );
-      const monthlyEarnings = monthlyReferrals.reduce((sum, ref) => sum + (ref.commission_amount || 0), 0);
-
-      setReferralStats({
-        totalReferrals,
-        totalEarnings,
-        monthlyEarnings,
-        pendingCommissions: 0
-      });
-
-      // Set recent referrals
-      const recentReferralData: ReferralData[] = referralData.map(ref => ({
-        id: ref.id,
-        referee_name: (ref.users as any)?.name || (ref.users as any)?.email || 'Unknown User',
-        joinDate: new Date(ref.created_at).toLocaleDateString(),
-        commission: ref.commission_amount || 0,
-        status: 'active'
-      }));
-
-      setRecentReferrals(recentReferralData.slice(0, 5));
-    } catch (error) {
-      console.error('Error loading referral data:', error);
-    }
-  };
 
   const copyReferralLink = () => {
     if (referralLink) {

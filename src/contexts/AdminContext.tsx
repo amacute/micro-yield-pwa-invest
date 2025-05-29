@@ -1,7 +1,6 @@
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
 
 type AdminContextType = {
@@ -31,6 +30,12 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
   const [adminLevel, setAdminLevel] = useState<'admin' | 'super_admin' | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // List of admin user IDs (you can modify this list)
+  const adminUserIds = [
+    // Add your admin user IDs here
+    // Example: 'user-uuid-1', 'user-uuid-2'
+  ];
+
   const checkAdminStatus = async () => {
     if (!user || !session) {
       setIsAdmin(false);
@@ -40,20 +45,12 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('admin_level, is_active')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-        setAdminLevel(null);
-      } else if (data) {
+      // Simple check: if user ID is in the admin list
+      const userIsAdmin = adminUserIds.includes(user.id);
+      
+      if (userIsAdmin) {
         setIsAdmin(true);
-        setAdminLevel(data.admin_level);
+        setAdminLevel('admin');
       } else {
         setIsAdmin(false);
         setAdminLevel(null);

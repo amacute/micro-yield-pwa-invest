@@ -54,29 +54,50 @@ export function useUserMatching() {
     try {
       setProcessing(true);
       
+      // Create a P2P payment record
       const { data, error } = await supabase
-        .rpc('create_p2p_match', {
-          p_lender_id: selectedLender.user_id,
-          p_borrower_id: selectedBorrower.user_id,
-          p_amount: loanAmount,
-          p_purpose: loanPurpose || 'P2P Loan'
-        });
+        .from('p2p_payments')
+        .insert({
+          from_user_id: selectedLender.user_id,
+          to_user_id: selectedBorrower.user_id,
+          amount: loanAmount,
+          purpose: loanPurpose || 'P2P Loan',
+          status: 'completed'
+        })
+        .select()
+        .single();
       
       if (error) throw error;
       
-      const apiResult = data as ApiResponse;
+      // Update wallet balances
+      const { error: lenderError } = await supabase
+        .from('users')
+        .update({ 
+          wallet_balance: selectedLender.wallet_balance - loanAmount 
+        })
+        .eq('user_id', selectedLender.user_id);
       
-      if (apiResult && apiResult.success) {
-        // Refresh users data
-        const updatedData = await fetchAvailableUsers();
-        const eligibleUsers = updatedData.filter(user => user.wallet_balance > 0);
-        setUsers(eligibleUsers);
-        
-        // Reset form
-        resetSelection();
-        
-        toast.success(`Successfully matched ${selectedLender.name || selectedLender.email} to lend $${loanAmount} to ${selectedBorrower.name || selectedBorrower.email}. 100% profit (${loanAmount * 2}) will be credited after 72 hours.`);
-      }
+      if (lenderError) throw lenderError;
+      
+      const { error: borrowerError } = await supabase
+        .from('users')
+        .update({ 
+          wallet_balance: selectedBorrower.wallet_balance + loanAmount 
+        })
+        .eq('user_id', selectedBorrower.user_id);
+      
+      if (borrowerError) throw borrowerError;
+      
+      // Refresh users data
+      const updatedData = await fetchAvailableUsers();
+      const eligibleUsers = updatedData.filter(user => user.wallet_balance > 0);
+      setUsers(eligibleUsers);
+      
+      // Reset form
+      resetSelection();
+      
+      toast.success(`Successfully matched ${selectedLender.name || selectedLender.email} to lend $${loanAmount} to ${selectedBorrower.name || selectedBorrower.email}. 100% profit (${loanAmount * 2}) will be credited after 72 hours.`);
+      
     } catch (error) {
       console.error('Error creating P2P lending match:', error);
       toast.error('Failed to create P2P lending match');

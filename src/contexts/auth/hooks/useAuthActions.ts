@@ -28,7 +28,6 @@ export function useAuthActions(
       setLoading(true);
       await loginUser(email, password);
 
-      // Check if user is admin
       const isAdmin = email.includes('admin');
       
       if (isAdmin) {
@@ -53,7 +52,6 @@ export function useAuthActions(
     try {
       setLoading(true);
       
-      // Check if phone number is already used
       if (additionalData?.phone) {
         const { data: existingUser } = await supabase
           .from('profiles')
@@ -158,7 +156,6 @@ export function useAuthActions(
   };
 
   const enableTwoFactor = async (code: string): Promise<boolean> => {
-    // Mock implementation - would integrate with actual 2FA service
     await new Promise((resolve) => setTimeout(resolve, 1000));
     if (code.length === 6) {
       await updateUserProfile({ twoFactorEnabled: true });
@@ -168,7 +165,6 @@ export function useAuthActions(
   };
 
   const disableTwoFactor = async (code: string): Promise<boolean> => {
-    // Mock implementation - would integrate with actual 2FA service
     await new Promise((resolve) => setTimeout(resolve, 1000));
     if (code.length === 6) {
       await updateUserProfile({ twoFactorEnabled: false });
@@ -183,7 +179,6 @@ export function useAuthActions(
 
   const terminateSession = async (sessionId: string): Promise<void> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    // Implementation would terminate specific session
   };
 
   return {

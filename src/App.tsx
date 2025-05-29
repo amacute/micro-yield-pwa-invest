@@ -6,6 +6,7 @@ import { InvestmentProvider } from '@/contexts/InvestmentContext';
 import { AdminProvider } from '@/contexts/AdminContext';
 import { Toaster } from '@/components/ui/sonner';
 import { Layout } from '@/components/layout/Layout';
+import { Outlet } from 'react-router-dom';
 
 // Public pages
 import LandingPage from '@/pages/LandingPage';
@@ -49,7 +50,7 @@ function App() {
                 <Route path="/terms" element={<TermsAndConditions />} />
                 
                 {/* Protected routes with layout */}
-                <Route path="/*" element={<Layout />}>
+                <Route path="/*" element={<Layout><Outlet /></Layout>}>
                   <Route path="index" element={<Index />} />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="profile" element={<Profile />} />

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bell, Globe, Palette, Users, Shield } from 'lucide-react';
 import { ReferralSystem } from './ReferralSystem';
+import { SocialMediaTab } from './SocialMediaTab';
 import { CountryDialog } from './dialogs/CountryDialog';
 import { LanguageDialog } from './dialogs/LanguageDialog';
 import { NotificationsDialog } from './dialogs/NotificationsDialog';
@@ -36,9 +36,10 @@ export function PreferencesTab() {
 
   return (
     <Tabs defaultValue="general" className="space-y-4">
-      <TabsList className="grid grid-cols-4">
+      <TabsList className="grid grid-cols-5">
         <TabsTrigger value="general">General</TabsTrigger>
         <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        <TabsTrigger value="social">Social Media</TabsTrigger>
         <TabsTrigger value="referrals">Referrals</TabsTrigger>
         <TabsTrigger value="privacy">Privacy</TabsTrigger>
       </TabsList>
@@ -196,6 +197,10 @@ export function PreferencesTab() {
             </div>
           </CardContent>
         </Card>
+      </TabsContent>
+
+      <TabsContent value="social" className="space-y-4">
+        <SocialMediaTab />
       </TabsContent>
 
       <TabsContent value="referrals" className="space-y-4">

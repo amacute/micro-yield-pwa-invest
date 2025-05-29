@@ -114,6 +114,72 @@ export type Database = {
         }
         Relationships: []
       }
+      user_social_media: {
+        Row: {
+          created_at: string | null
+          id: string
+          platform: string
+          updated_at: string | null
+          url: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          platform: string
+          updated_at?: string | null
+          url?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          platform?: string
+          updated_at?: string | null
+          url?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_videos: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          platform: string
+          posted_date: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          platform: string
+          posted_date?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          platform?: string
+          posted_date?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

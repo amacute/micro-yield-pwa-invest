@@ -11,344 +11,106 @@ export type Database = {
     Tables: {
       investments: {
         Row: {
-          category: string
-          created_at: string
-          creator_id: string | null
-          description: string
-          duration: number
-          end_time: string
-          goal: number
-          id: string
-          investors: number
-          max_investment: number
-          min_investment: number
-          raised: number
-          return_rate: number
-          risk: string
-          status: string
-          title: string
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          creator_id?: string | null
-          description: string
-          duration: number
-          end_time: string
-          goal: number
-          id?: string
-          investors?: number
-          max_investment: number
-          min_investment: number
-          raised?: number
-          return_rate: number
-          risk: string
-          status: string
-          title: string
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          creator_id?: string | null
-          description?: string
-          duration?: number
-          end_time?: string
-          goal?: number
-          id?: string
-          investors?: number
-          max_investment?: number
-          min_investment?: number
-          raised?: number
-          return_rate?: number
-          risk?: string
-          status?: string
-          title?: string
-        }
-        Relationships: []
-      }
-      p2p_investments: {
-        Row: {
           amount: number
-          created_at: string
+          created_at: string | null
+          end_date: string | null
+          expected_return: number
           id: string
-          investor_id: string
-          loan_id: string
+          start_date: string | null
           status: string
+          type: string
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           amount: number
-          created_at?: string
+          created_at?: string | null
+          end_date?: string | null
+          expected_return: number
           id?: string
-          investor_id: string
-          loan_id: string
+          start_date?: string | null
           status: string
+          type: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           amount?: number
-          created_at?: string
+          created_at?: string | null
+          end_date?: string | null
+          expected_return?: number
           id?: string
-          investor_id?: string
-          loan_id?: string
+          start_date?: string | null
           status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "p2p_investments_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "p2p_loans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      p2p_loans: {
-        Row: {
-          amount: number
-          borrower_id: string
-          created_at: string
-          id: string
-          interest_rate: number
-          purpose: string
-          risk: string
-          status: string
-          term: number
-        }
-        Insert: {
-          amount: number
-          borrower_id: string
-          created_at?: string
-          id?: string
-          interest_rate: number
-          purpose: string
-          risk: string
-          status: string
-          term: number
-        }
-        Update: {
-          amount?: number
-          borrower_id?: string
-          created_at?: string
-          id?: string
-          interest_rate?: number
-          purpose?: string
-          risk?: string
-          status?: string
-          term?: number
-        }
-        Relationships: []
-      }
-      p2p_payments: {
-        Row: {
-          admin_id: string | null
-          amount: number
-          completed_at: string | null
-          created_at: string
-          id: string
-          payee_id: string | null
-          payer_id: string | null
-          purpose: string | null
-          status: string
-        }
-        Insert: {
-          admin_id?: string | null
-          amount: number
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          payee_id?: string | null
-          payer_id?: string | null
-          purpose?: string | null
-          status?: string
-        }
-        Update: {
-          admin_id?: string | null
-          amount?: number
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          payee_id?: string | null
-          payer_id?: string | null
-          purpose?: string | null
-          status?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
       profiles: {
         Row: {
-          bio: string | null
+          avatar_url: string | null
           created_at: string | null
-          id: number
-          user_id: string | null
-          username: string | null
+          email: string
+          full_name: string | null
+          id: string
+          total_invested: number | null
+          total_returns: number | null
+          updated_at: string | null
+          wallet_balance: number | null
         }
         Insert: {
-          bio?: string | null
+          avatar_url?: string | null
           created_at?: string | null
-          id?: never
-          user_id?: string | null
-          username?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          total_invested?: number | null
+          total_returns?: number | null
+          updated_at?: string | null
+          wallet_balance?: number | null
         }
         Update: {
-          bio?: string | null
+          avatar_url?: string | null
           created_at?: string | null
-          id?: never
-          user_id?: string | null
-          username?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          total_invested?: number | null
+          total_returns?: number | null
+          updated_at?: string | null
+          wallet_balance?: number | null
         }
         Relationships: []
       }
       transactions: {
         Row: {
           amount: number
-          created_at: string
-          description: string
+          created_at: string | null
+          description: string | null
           id: string
-          reference_id: string | null
           status: string
           type: string
           user_id: string | null
         }
         Insert: {
           amount: number
-          created_at?: string
-          description: string
+          created_at?: string | null
+          description?: string | null
           id?: string
-          reference_id?: string | null
-          status?: string
+          status: string
           type: string
           user_id?: string | null
         }
         Update: {
           amount?: number
-          created_at?: string
-          description?: string
+          created_at?: string | null
+          description?: string | null
           id?: string
-          reference_id?: string | null
           status?: string
           type?: string
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      user_investments: {
-        Row: {
-          amount: number
-          created_at: string
-          end_date: string
-          expected_return: number
-          id: string
-          investment_id: string
-          status: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          end_date: string
-          expected_return: number
-          id?: string
-          investment_id: string
-          status: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          end_date?: string
-          expected_return?: number
-          id?: string
-          investment_id?: string
-          status?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_investments_investment_id_fkey"
-            columns: ["investment_id"]
-            isOneToOne: false
-            referencedRelation: "investments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_sessions: {
-        Row: {
-          created_at: string
-          device: string
-          id: string
-          last_active: string
-          location: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          device: string
-          id?: string
-          last_active?: string
-          location: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          device?: string
-          id?: string
-          last_active?: string
-          location?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      users: {
-        Row: {
-          country: string | null
-          created_at: string
-          currency: string | null
-          currency_symbol: string | null
-          email: string
-          id: string
-          kyc_verified: boolean
-          name: string | null
-          passport_url: string | null
-          phone: string | null
-          profile_image_url: string | null
-          two_factor_enabled: boolean | null
-          updated_at: string | null
-          user_id: string
-          wallet_balance: number
-        }
-        Insert: {
-          country?: string | null
-          created_at?: string
-          currency?: string | null
-          currency_symbol?: string | null
-          email: string
-          id?: string
-          kyc_verified?: boolean
-          name?: string | null
-          passport_url?: string | null
-          phone?: string | null
-          profile_image_url?: string | null
-          two_factor_enabled?: boolean | null
-          updated_at?: string | null
-          user_id: string
-          wallet_balance?: number
-        }
-        Update: {
-          country?: string | null
-          created_at?: string
-          currency?: string | null
-          currency_symbol?: string | null
-          email?: string
-          id?: string
-          kyc_verified?: boolean
-          name?: string | null
-          passport_url?: string | null
-          phone?: string | null
-          profile_image_url?: string | null
-          two_factor_enabled?: boolean | null
-          updated_at?: string | null
-          user_id?: string
-          wallet_balance?: number
         }
         Relationships: []
       }
@@ -357,23 +119,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_p2p_match: {
-        Args: { loan_id: string; investor_ids: string[]; amounts: number[] }
-        Returns: Json
-      }
-      create_p2p_payment: {
-        Args: {
-          payer_user_id: string
-          payee_user_id: string
-          payment_amount: number
-          payment_purpose?: string
-        }
-        Returns: Json
-      }
-      is_admin: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

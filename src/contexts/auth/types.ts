@@ -25,6 +25,12 @@ export type UserType = {
   }>;
 };
 
+interface AdditionalSignupData {
+  phone?: string;
+  country?: string;
+  referralCode?: string;
+}
+
 export type AuthContextType = {
   user: UserType | null;
   loading: boolean;
@@ -32,11 +38,7 @@ export type AuthContextType = {
   isAuthenticated: boolean;
   session: Session | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string, additionalData?: {
-    phone?: string;
-    country?: string;
-    referralCode?: string;
-  }) => Promise<void>;
+  signup: (name: string, email: string, password: string, additionalData?: AdditionalSignupData) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile?: (updates: Partial<UserType>) => Promise<void>;
   updateUser?: (user: UserType) => Promise<void>;

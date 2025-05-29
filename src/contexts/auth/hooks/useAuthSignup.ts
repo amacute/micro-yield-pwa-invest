@@ -4,16 +4,23 @@ import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { signupUser, signInWithGoogleProvider } from '../services';
 
+interface AdditionalSignupData {
+  phone?: string;
+  country?: string;
+  referralCode?: string;
+}
+
 export function useAuthSignup(
   setLoading: (loading: boolean) => void
 ) {
   const navigate = useNavigate();
 
-  const signup = async (name: string, email: string, password: string, additionalData?: {
-    phone?: string;
-    country?: string;
-    referralCode?: string;
-  }): Promise<void> => {
+  const signup = async (
+    name: string, 
+    email: string, 
+    password: string, 
+    additionalData?: AdditionalSignupData
+  ): Promise<void> => {
     try {
       setLoading(true);
       

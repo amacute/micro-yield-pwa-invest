@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, LineChart, DollarSign, PieChart, Shield } from 'lucide-react';
+import { Users, LineChart, DollarSign, PieChart } from 'lucide-react';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { InvestmentManagement } from '@/components/admin/InvestmentManagement';
 import { P2PMatching } from '@/components/admin/P2PMatching';
@@ -12,7 +13,6 @@ import { UserMatching } from '@/components/admin/UserMatching';
 import { UserBlockingManagement } from '@/components/admin/UserBlockingManagement';
 import { ExpiredInvestments } from '@/components/admin/ExpiredInvestments';
 import { NotificationCenter } from '@/components/admin/NotificationCenter';
-import { KYCVerificationManagement } from '@/components/admin/KYCVerificationManagement';
 
 type AdminStat = {
   title: string;
@@ -26,48 +26,51 @@ type AdminStat = {
 };
 
 export default function AdminDashboard() {
-  const [stats] = useState<AdminStat[]>([
+  const [selectedTab, setSelectedTab] = useState('overview');
+  
+  // Mock admin stats
+  const stats: AdminStat[] = [
     {
-      title: 'Total Users',
-      value: '2,345',
-      icon: <Users className="h-4 w-4" />,
+      title: "Total Users",
+      value: "1,246",
       change: {
-        value: '12%',
-        label: 'vs last month',
-        positive: true
-      }
+        value: "12%",
+        label: "From last month",
+        positive: true,
+      },
+      icon: <Users size={20} />,
     },
     {
-      title: 'Active Investments',
-      value: '$1.2M',
-      icon: <PieChart className="h-4 w-4" />,
+      title: "Active Investments",
+      value: "48",
       change: {
-        value: '8%',
-        label: 'vs last month',
-        positive: true
-      }
+        value: "8%",
+        label: "From last month",
+        positive: true,
+      },
+      icon: <LineChart size={20} />,
     },
     {
-      title: 'Total Revenue',
-      value: '$45,231',
-      icon: <DollarSign className="h-4 w-4" />,
+      title: "Investment Volume",
+      value: "$234,578",
       change: {
-        value: '15%',
-        label: 'vs last month',
-        positive: true
-      }
+        value: "14%",
+        label: "From last month",
+        positive: true,
+      },
+      icon: <DollarSign size={20} />,
     },
     {
-      title: 'Growth Rate',
-      value: '24.5%',
-      icon: <LineChart className="h-4 w-4" />,
+      title: "Verification Rate",
+      value: "68%",
       change: {
-        value: '3%',
-        label: 'vs last month',
-        positive: true
-      }
-    }
-  ]);
+        value: "5%",
+        label: "From last month",
+        positive: true,
+      },
+      icon: <PieChart size={20} />,
+    },
+  ];
   
   return (
     <div className="space-y-6">
@@ -88,7 +91,7 @@ export default function AdminDashboard() {
       </div>
       
       <Tabs defaultValue="analytics" className="space-y-4">
-        <TabsList className="grid grid-cols-9">
+        <TabsList className="grid grid-cols-8">
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="investments">Investments</TabsTrigger>
@@ -97,7 +100,6 @@ export default function AdminDashboard() {
           <TabsTrigger value="messaging">Messaging</TabsTrigger>
           <TabsTrigger value="expired">Expired</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="kyc">KYC</TabsTrigger>
         </TabsList>
         
         <TabsContent value="analytics" className="space-y-4">
@@ -131,10 +133,6 @@ export default function AdminDashboard() {
         
         <TabsContent value="notifications" className="space-y-4">
           <NotificationCenter />
-        </TabsContent>
-
-        <TabsContent value="kyc" className="space-y-4">
-          <KYCVerificationManagement />
         </TabsContent>
       </Tabs>
     </div>

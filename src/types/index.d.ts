@@ -1,17 +1,16 @@
 declare module '@/components/ui/button' {
-  interface ButtonProps {
-    variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-    size?: 'default' | 'sm' | 'lg';
+  export const Button: React.FC<{
+    variant?: 'default' | 'outline';
+    size?: 'sm' | 'default';
     className?: string;
     disabled?: boolean;
     onClick?: () => void;
     children: React.ReactNode;
-    type?: 'button' | 'submit' | 'reset';
-  }
+  }>;
 }
 
 declare module '@/components/ui/input' {
-  interface InputProps {
+  export const Input: React.FC<{
     type?: string;
     placeholder?: string;
     value?: string | number;
@@ -19,42 +18,26 @@ declare module '@/components/ui/input' {
     min?: string;
     step?: string;
     className?: string;
-    id?: string;
-    required?: boolean;
-    disabled?: boolean;
-  }
+  }>;
 }
 
 declare module '@/components/ui/card' {
-  interface CardProps {
+  export const Card: React.FC<{
     className?: string;
     children: React.ReactNode;
-  }
-  
-  interface CardHeaderProps {
+  }>;
+  export const CardHeader: React.FC<{
     className?: string;
     children: React.ReactNode;
-  }
-  
-  interface CardTitleProps {
+  }>;
+  export const CardContent: React.FC<{
     className?: string;
     children: React.ReactNode;
-  }
-  
-  interface CardDescriptionProps {
+  }>;
+  export const CardTitle: React.FC<{
     className?: string;
     children: React.ReactNode;
-  }
-  
-  interface CardContentProps {
-    className?: string;
-    children: React.ReactNode;
-  }
-  
-  interface CardFooterProps {
-    className?: string;
-    children: React.ReactNode;
-  }
+  }>;
 }
 
 declare module '@/components/ui/badge' {

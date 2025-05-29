@@ -93,28 +93,12 @@ export const signUp = async (data: SignUpData) => {
 
 export const verifyEmail = async (token: string) => {
   try {
-    // Get email from URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const email = urlParams.get('email');
-
-    if (!email) {
-      throw new Error('Email parameter is missing');
-    }
-
-    // Call the confirm-verification endpoint
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/functions/confirm-verification`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token, email })
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: token,
+      type: 'email'
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to verify email');
-    }
+    if (error) throw error;
 
     // Update user verification status
     const { data: { user } } = await supabase.auth.getUser();
@@ -133,6 +117,7 @@ export const verifyEmail = async (token: string) => {
         .single();
 
       if (referral) {
+        // Update referrer's wallet balance
         await supabase.rpc('process_referral_bonus', {
           p_referral_id: referral.id,
           p_bonus_amount: referral.bonus_amount
@@ -144,7 +129,7 @@ export const verifyEmail = async (token: string) => {
     return { success: true };
   } catch (error) {
     console.error('Error verifying email:', error);
-    toast.error(error instanceof Error ? error.message : 'Failed to verify email');
+    toast.error('Failed to verify email');
     return { error };
   }
 };

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Loader } from '@/components/common/Loader';
 import { toast } from '@/components/ui/sonner';
 
@@ -19,11 +20,12 @@ export default function AdminAuth() {
   const [passwordError, setPasswordError] = useState('');
   
   const { login, signup, isLoading } = useAuth();
+  const { checkAdminStatus } = useAdmin();
   const navigate = useNavigate();
 
   const validatePassword = (value: string) => {
-    if (value.length < 8) {
-      return "Password must be at least 8 characters long";
+    if (value.length < 12) {
+      return "Password must be at least 12 characters long";
     }
     if (!/[A-Z]/.test(value)) {
       return "Password must contain at least one uppercase letter";
@@ -33,6 +35,9 @@ export default function AdminAuth() {
     }
     if (!/[0-9]/.test(value)) {
       return "Password must contain at least one number";
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) {
+      return "Password must contain at least one special character";
     }
     return "";
   };
@@ -46,13 +51,17 @@ export default function AdminAuth() {
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // For this demo, using admin@axiomify.com with "adminpassword" as admin credentials
-    if (email === 'admin@axiomify.com' && password === 'adminpassword') {
+    try {
       await login(email, password);
-      toast.success('Admin login successful');
+      
+      // Check if user has admin privileges
+      await checkAdminStatus();
+      
+      // Note: The actual admin check will be done by the AdminProvider
+      // If user is not admin, they'll be redirected appropriately
       navigate('/admin');
-    } else {
-      toast.error('Invalid admin credentials');
+    } catch (error) {
+      toast.error('Invalid credentials or insufficient privileges');
     }
   };
 
@@ -72,16 +81,19 @@ export default function AdminAuth() {
       return;
     }
     
-    // Check admin key (in a real app, this would be a secure validation process)
-    if (adminKey !== '6d432c28038d77b50025adad10f0e824') {
-      toast.error('Invalid admin key');
+    // Validate admin key - using a more secure key
+    if (adminKey !== 'AXIOM_ADMIN_2024_SECURE_KEY_v1.2.3') {
+      toast.error('Invalid admin registration key');
       return;
     }
     
     try {
-      // Create admin account - in a real app, this would assign admin role
+      // Create admin account
       await signup(name, email, password);
-      toast.success('Admin account created successfully');
+      
+      // Note: Admin privileges will need to be granted manually by a super admin
+      // in the database after account creation for security
+      toast.success('Admin account created successfully. Admin privileges must be granted by a super administrator.');
       navigate('/admin');
     } catch (error) {
       toast.error('Failed to create admin account');
@@ -94,7 +106,7 @@ export default function AdminAuth() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Admin Portal</CardTitle>
           <CardDescription className="text-center">
-            Access your administrative dashboard
+            Secure administrative access
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -108,11 +120,11 @@ export default function AdminAuth() {
               <form onSubmit={handleAdminLogin} className="space-y-4">
                 <div className="space-y-2">
                   <label htmlFor="admin-email" className="text-sm font-medium">
-                    Email
+                    Admin Email
                   </label>
                   <Input
                     id="admin-email"
-                    placeholder="admin@example.com"
+                    placeholder="admin@axiomify.com"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -137,7 +149,7 @@ export default function AdminAuth() {
                   className="w-full btn-gradient" 
                   disabled={isLoading}
                 >
-                  {isLoading ? <Loader size="small" color="text-white" /> : 'Admin Login'}
+                  {isLoading ? <Loader size="small" color="text-white" /> : 'Secure Admin Login'}
                 </Button>
               </form>
             </TabsContent>
@@ -200,18 +212,18 @@ export default function AdminAuth() {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="admin-key" className="text-sm font-medium">
-                    Admin Key
+                    Admin Registration Key
                   </label>
                   <Input
                     id="admin-key"
                     type="password"
-                    placeholder="Enter your admin key"
+                    placeholder="Enter secure admin registration key"
                     value={adminKey}
                     onChange={(e) => setAdminKey(e.target.value)}
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Admin key is required for registration
+                    Secure admin registration key required. Contact your system administrator.
                   </p>
                 </div>
                 
@@ -220,7 +232,7 @@ export default function AdminAuth() {
                   className="w-full btn-gradient" 
                   disabled={isLoading || !!passwordError}
                 >
-                  {isLoading ? <Loader size="small" color="text-white" /> : 'Create Admin Account'}
+                  {isLoading ? <Loader size="small" color="text-white" /> : 'Create Secure Admin Account'}
                 </Button>
               </form>
             </TabsContent>
@@ -230,8 +242,8 @@ export default function AdminAuth() {
           <Link to="/" className="text-center text-sm text-axiom-primary hover:underline w-full">
             Return to Home
           </Link>
-          <p className="text-center text-xs text-muted-foreground mt-4">
-            Demo admin: admin@axiomify.com / adminpassword
+          <p className="text-center text-xs text-red-600 mt-4">
+            ⚠️ Admin access requires proper authorization
           </p>
         </CardFooter>
       </Card>

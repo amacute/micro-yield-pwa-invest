@@ -104,6 +104,34 @@ export const fetchAvailableInvestors = async () => {
   return data || [];
 };
 
+// Create P2P match - simplified for P2P payments
+export const createP2PMatch = async (loanId: string, investors: { id: string, amount: number }[]) => {
+  try {
+    // Create P2P payments for each investor
+    const payments = investors.map(investor => ({
+      payer_id: investor.id,
+      payee_id: loanId, // Using loanId as the payee for now
+      amount: investor.amount,
+      purpose: 'P2P Investment',
+      status: 'completed'
+    }));
+
+    const { data, error } = await supabase
+      .from('p2p_payments')
+      .insert(payments)
+      .select();
+    
+    if (error) throw error;
+    
+    toast.success('P2P match created successfully');
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error creating P2P match:', error);
+    toast.error('Failed to create P2P match');
+    return { success: false, error };
+  }
+};
+
 // Create P2P payment directly using correct column names
 export const createLendingMatch = async (lenderId: string, borrowerId: string, amount: number, purpose?: string) => {
   try {

@@ -26,7 +26,12 @@
     "noImplicitThis": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "outDir": "./dist",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true
   },
   "include": ["src", "tests"],
   "exclude": ["node_modules", "dist", "build"],

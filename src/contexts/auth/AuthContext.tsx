@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -241,31 +240,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Implementation would terminate specific session
   };
 
-  // Explicitly type the context value
-  const contextValue: AuthContextType = {
-    user,
-    loading,
-    isLoading: loading,
-    isAuthenticated,
-    session,
-    login,
-    signup,
-    logout,
-    updateUserProfile,
-    updateUser,
-    updatePassword,
-    verifyEmail,
-    sendEmailVerification,
-    updateCurrency,
-    enableTwoFactor,
-    disableTwoFactor,
-    getSessions,
-    terminateSession,
-    signInWithGoogle
-  };
-
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      isLoading: loading,
+      isAuthenticated,
+      session,
+      login,
+      signup,
+      logout,
+      updateUserProfile,
+      updateUser,
+      updatePassword,
+      verifyEmail,
+      sendEmailVerification,
+      updateCurrency,
+      enableTwoFactor,
+      disableTwoFactor,
+      getSessions,
+      terminateSession,
+      signInWithGoogle
+    }}>
       {children}
     </AuthContext.Provider>
   );

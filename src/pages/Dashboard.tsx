@@ -1,7 +1,7 @@
-
+import { FC } from 'react';
 import { Wallet, PieChart, TrendingUp, Users } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInvestment } from '@/contexts/InvestmentContext';
@@ -9,8 +9,9 @@ import { InvestmentCard } from '@/components/investments/InvestmentCard';
 import { Link } from 'react-router-dom';
 import { MessageBanner } from '@/components/dashboard/MessageBanner';
 import { toast } from '@/components/ui/sonner';
+import { ArrowUpRight } from 'lucide-react';
 
-export default function Dashboard() {
+export const Dashboard: FC = () => {
   const { user } = useAuth();
   const { userInvestments, availableInvestments, getUserReferralLink, getReferralStats } = useInvestment();
   
@@ -80,28 +81,51 @@ export default function Dashboard() {
         </CardContent>
       </Card>
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatsCard 
-          title="Wallet Balance" 
-          value={`${user?.currencySymbol || '$'}${user?.walletBalance.toFixed(2) || '0.00'}`}
-          icon={<Wallet className="h-4 w-4 text-axiom-primary" />}
-        />
-        <StatsCard 
-          title="Active Investments" 
-          value={activeInvestments.length}
-          icon={<PieChart className="h-4 w-4 text-axiom-primary" />}
-        />
-        <StatsCard 
-          title="Total Returns" 
-          value={`${user?.currencySymbol || '$'}350.75`}
-          change={{ value: "15%", positive: true }}
-          icon={<TrendingUp className="h-4 w-4 text-axiom-primary" />}
-        />
-        <StatsCard 
-          title="Referral Earnings" 
-          value={`${user?.currencySymbol || '$'}${referralStats.totalEarnings.toFixed(2)}`}
-          icon={<Users className="h-4 w-4 text-axiom-primary" />}
-        />
+      {/* Overview Section */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Balance</CardTitle>
+            <CardDescription>Your current portfolio value</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{user?.currencySymbol || '$'}{user?.walletBalance.toFixed(2) || '0.00'}</div>
+            <div className="text-sm text-green-500 flex items-center mt-2">
+              <ArrowUpRight className="w-4 h-4 mr-1" />
+              {user?.walletBalanceChange ? `+${user.walletBalanceChange.toFixed(2)}%` : '+0%'}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Invested</CardTitle>
+            <CardDescription>Amount invested to date</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{user?.currencySymbol || '$'}{user?.totalInvested.toFixed(2) || '0.00'}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Returns</CardTitle>
+            <CardDescription>Net profit/loss</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-500">{user?.currencySymbol || '$'}{user?.totalReturns.toFixed(2) || '0.00'}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Active Investments</CardTitle>
+            <CardDescription>Current active positions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeInvestments.length}</div>
+          </CardContent>
+        </Card>
       </div>
       
       {activeInvestments.length > 0 ? (
@@ -189,4 +213,4 @@ export default function Dashboard() {
       </Card>
     </div>
   );
-}
+};

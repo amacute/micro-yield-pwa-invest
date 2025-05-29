@@ -1,23 +1,47 @@
-
 {
-  "name": "Axiomify P2P Lending",
-  "short_name": "Axiomify",
-  "description": "Secure peer-to-peer lending platform connecting borrowers and lenders",
+  "short_name": "MicroYield",
+  "name": "MicroYield Investment Platform",
   "icons": [
     {
-      "src": "icons/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
     },
     {
-      "src": "icons/icon-512x512.png",
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
       "sizes": "512x512",
-      "type": "image/png"
+      "purpose": "any maskable"
     }
   ],
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
-  "theme_color": "#7c3aed",
+  "theme_color": "#000000",
   "background_color": "#ffffff",
-  "categories": ["finance", "business"]
+  "orientation": "portrait",
+  "description": "A modern investment platform for smart investors",
+  "categories": ["finance", "investment", "business"],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Dashboard View"
+    },
+    {
+      "src": "screenshot2.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Investment Options"
+    }
+  ],
+  "prefer_related_applications": false
 }

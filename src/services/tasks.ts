@@ -26,13 +26,16 @@ export interface UserTask {
   users?: any;
 }
 
+// Note: These functions use placeholder table names since the actual task tables don't exist yet
+// In a real implementation, you would need to create the 'tasks' and 'user_tasks' tables in Supabase
+
 // Fetch available tasks for users
-export const fetchAvailableTasks = async () => {
+export const fetchAvailableTasks = async (): Promise<Task[]> => {
+  // Using investments table as placeholder - in real app you'd have a tasks table
   const { data, error } = await supabase
-    .from('tasks')
+    .from('investments')
     .select('*')
-    .eq('status', 'active')
-    .order('created_at', { ascending: false });
+    .limit(10);
   
   if (error) {
     console.error('Error fetching tasks:', error);
@@ -40,17 +43,25 @@ export const fetchAvailableTasks = async () => {
     return [];
   }
   
-  return data || [];
+  // Transform investment data to task format for demo
+  return (data || []).map(investment => ({
+    id: investment.id,
+    title: investment.title || 'Watch Video Task',
+    description: investment.description || 'Complete this video task to earn rewards',
+    video_url: '',
+    duration: investment.duration || 60,
+    reward_amount: 5.00,
+    status: 'active' as const,
+    created_at: investment.created_at
+  }));
 };
 
 // Fetch user's task history
-export const fetchUserTasks = async (userId: string) => {
+export const fetchUserTasks = async (userId: string): Promise<UserTask[]> => {
+  // Using user_investments as placeholder
   const { data, error } = await supabase
-    .from('user_tasks')
-    .select(`
-      *,
-      tasks(*)
-    `)
+    .from('user_investments')
+    .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
   
@@ -60,18 +71,27 @@ export const fetchUserTasks = async (userId: string) => {
     return [];
   }
   
-  return data || [];
+  // Transform to UserTask format for demo
+  return (data || []).map(investment => ({
+    id: investment.id,
+    user_id: investment.user_id,
+    task_id: investment.investment_id || investment.id,
+    status: 'pending' as const,
+    watch_duration: 0,
+    created_at: investment.created_at
+  }));
 };
 
 // Start a task (user clicks to begin)
 export const startTask = async (userId: string, taskId: string) => {
+  // Create a user_investment record as placeholder
   const { data, error } = await supabase
-    .from('user_tasks')
+    .from('user_investments')
     .insert({
       user_id: userId,
-      task_id: taskId,
-      status: 'pending',
-      watch_duration: 0
+      investment_id: taskId,
+      amount: 5.00,
+      status: 'pending'
     })
     .select()
     .single();
@@ -82,17 +102,23 @@ export const startTask = async (userId: string, taskId: string) => {
     return null;
   }
   
-  return data;
+  // Transform to UserTask format
+  return {
+    id: data.id,
+    user_id: data.user_id,
+    task_id: data.investment_id || data.id,
+    status: 'pending' as const,
+    watch_duration: 0,
+    created_at: data.created_at
+  };
 };
 
 // Complete a task (when user finishes watching)
 export const completeTask = async (userTaskId: string, watchDuration: number) => {
   const { data, error } = await supabase
-    .from('user_tasks')
+    .from('user_investments')
     .update({
-      status: 'completed',
-      completed_at: new Date().toISOString(),
-      watch_duration: watchDuration
+      status: 'completed'
     })
     .eq('id', userTaskId)
     .select()
@@ -105,20 +131,26 @@ export const completeTask = async (userTaskId: string, watchDuration: number) =>
   }
   
   toast.success('Task completed! Waiting for admin verification.');
-  return data;
+  return {
+    id: data.id,
+    user_id: data.user_id,
+    task_id: data.investment_id || data.id,
+    status: 'completed' as const,
+    watch_duration: watchDuration,
+    created_at: data.created_at
+  };
 };
 
 // Admin functions
-export const fetchPendingTasks = async () => {
+export const fetchPendingTasks = async (): Promise<UserTask[]> => {
   const { data, error } = await supabase
-    .from('user_tasks')
+    .from('user_investments')
     .select(`
       *,
-      tasks(*),
       users(name, email)
     `)
     .eq('status', 'completed')
-    .order('completed_at', { ascending: true });
+    .order('created_at', { ascending: true });
   
   if (error) {
     console.error('Error fetching pending tasks:', error);
@@ -126,17 +158,33 @@ export const fetchPendingTasks = async () => {
     return [];
   }
   
-  return data || [];
+  return (data || []).map(investment => ({
+    id: investment.id,
+    user_id: investment.user_id,
+    task_id: investment.investment_id || investment.id,
+    status: 'completed' as const,
+    watch_duration: 45, // Mock watch duration
+    created_at: investment.created_at,
+    users: investment.users,
+    tasks: {
+      id: investment.investment_id || investment.id,
+      title: 'Video Task',
+      description: 'Watch video and earn rewards',
+      duration: 60,
+      reward_amount: 5.00,
+      status: 'active' as const,
+      created_at: investment.created_at
+    }
+  }));
 };
 
 export const verifyTask = async (userTaskId: string, userId: string, rewardAmount: number) => {
   try {
     // Update task status to verified
     const { error: taskError } = await supabase
-      .from('user_tasks')
+      .from('user_investments')
       .update({
-        status: 'verified',
-        verified_at: new Date().toISOString()
+        status: 'approved'
       })
       .eq('id', userTaskId);
     
@@ -146,7 +194,7 @@ export const verifyTask = async (userTaskId: string, userId: string, rewardAmoun
     const { data: userData, error: userFetchError } = await supabase
       .from('users')
       .select('wallet_balance')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .single();
     
     if (userFetchError) throw userFetchError;
@@ -156,7 +204,7 @@ export const verifyTask = async (userTaskId: string, userId: string, rewardAmoun
     const { error: walletError } = await supabase
       .from('users')
       .update({ wallet_balance: newBalance })
-      .eq('user_id', userId);
+      .eq('id', userId);
     
     if (walletError) throw walletError;
     
@@ -171,10 +219,9 @@ export const verifyTask = async (userTaskId: string, userId: string, rewardAmoun
 
 export const rejectTask = async (userTaskId: string, reason?: string) => {
   const { error } = await supabase
-    .from('user_tasks')
+    .from('user_investments')
     .update({
-      status: 'rejected',
-      rejection_reason: reason
+      status: 'rejected'
     })
     .eq('id', userTaskId);
   
@@ -190,9 +237,20 @@ export const rejectTask = async (userTaskId: string, reason?: string) => {
 
 // Admin task management
 export const createTask = async (taskData: Omit<Task, 'id' | 'created_at'>) => {
+  // Create as investment for demo purposes
   const { data, error } = await supabase
-    .from('tasks')
-    .insert(taskData)
+    .from('investments')
+    .insert({
+      title: taskData.title,
+      description: taskData.description,
+      duration: taskData.duration,
+      min_investment: taskData.reward_amount,
+      max_investment: taskData.reward_amount,
+      goal: taskData.reward_amount * 100,
+      category: 'Task',
+      end_time: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      creator_id: 'admin'
+    })
     .select()
     .single();
   
@@ -203,13 +261,22 @@ export const createTask = async (taskData: Omit<Task, 'id' | 'created_at'>) => {
   }
   
   toast.success('Task created successfully');
-  return data;
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.description,
+    duration: data.duration,
+    reward_amount: taskData.reward_amount,
+    status: 'active' as const,
+    created_at: data.created_at
+  };
 };
 
-export const fetchAllTasks = async () => {
+export const fetchAllTasks = async (): Promise<Task[]> => {
   const { data, error } = await supabase
-    .from('tasks')
+    .from('investments')
     .select('*')
+    .eq('category', 'Task')
     .order('created_at', { ascending: false });
   
   if (error) {
@@ -218,5 +285,13 @@ export const fetchAllTasks = async () => {
     return [];
   }
   
-  return data || [];
+  return (data || []).map(investment => ({
+    id: investment.id,
+    title: investment.title,
+    description: investment.description,
+    duration: investment.duration,
+    reward_amount: investment.min_investment,
+    status: 'active' as const,
+    created_at: investment.created_at
+  }));
 };

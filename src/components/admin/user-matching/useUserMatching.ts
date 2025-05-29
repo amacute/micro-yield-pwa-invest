@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { fetchAvailableUsers } from '@/services/admin';
+import { fetchAvailableUsers } from '@/services/user-management';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -31,7 +31,7 @@ export function useUserMatching() {
       return;
     }
     
-    if (selectedLender.user_id === selectedBorrower.user_id) {
+    if (selectedLender.id === selectedBorrower.id) {
       toast.error('Lender and borrower cannot be the same user');
       return;
     }
@@ -53,8 +53,8 @@ export function useUserMatching() {
       const { data, error } = await supabase
         .from('p2p_payments')
         .insert({
-          payer_id: selectedLender.user_id,
-          payee_id: selectedBorrower.user_id,
+          payer_id: selectedLender.id,
+          payee_id: selectedBorrower.id,
           amount: loanAmount,
           purpose: loanPurpose || 'P2P Loan',
           status: 'completed'
@@ -70,7 +70,7 @@ export function useUserMatching() {
         .update({ 
           wallet_balance: selectedLender.wallet_balance - loanAmount 
         })
-        .eq('user_id', selectedLender.user_id);
+        .eq('id', selectedLender.id);
       
       if (lenderError) throw lenderError;
       
@@ -79,7 +79,7 @@ export function useUserMatching() {
         .update({ 
           wallet_balance: selectedBorrower.wallet_balance + loanAmount 
         })
-        .eq('user_id', selectedBorrower.user_id);
+        .eq('id', selectedBorrower.id);
       
       if (borrowerError) throw borrowerError;
       

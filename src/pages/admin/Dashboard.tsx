@@ -13,6 +13,7 @@ import { UserMatching } from '@/components/admin/UserMatching';
 import { UserBlockingManagement } from '@/components/admin/UserBlockingManagement';
 import { ExpiredInvestments } from '@/components/admin/ExpiredInvestments';
 import { NotificationCenter } from '@/components/admin/NotificationCenter';
+import { TaskManagement } from '@/components/admin/TaskManagement';
 
 type AdminStat = {
   title: string;
@@ -91,10 +92,11 @@ export default function AdminDashboard() {
       </div>
       
       <Tabs defaultValue="analytics" className="space-y-4">
-        <TabsList className="grid grid-cols-8">
+        <TabsList className="grid grid-cols-9">
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="investments">Investments</TabsTrigger>
+          <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="p2p">P2P Matching</TabsTrigger>
           <TabsTrigger value="user-matching">User Matching</TabsTrigger>
           <TabsTrigger value="messaging">Messaging</TabsTrigger>
@@ -113,6 +115,10 @@ export default function AdminDashboard() {
         
         <TabsContent value="investments" className="space-y-4">
           <InvestmentManagement />
+        </TabsContent>
+        
+        <TabsContent value="tasks" className="space-y-4">
+          <TaskManagement />
         </TabsContent>
         
         <TabsContent value="p2p" className="space-y-4">

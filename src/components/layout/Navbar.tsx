@@ -1,6 +1,6 @@
 
 import { Link, useLocation } from 'react-router-dom';
-import { Home, PieChart, Wallet, User } from 'lucide-react';
+import { Home, PieChart, Wallet, User, Play } from 'lucide-react';
 
 export function Navbar() {
   const location = useLocation();
@@ -15,6 +15,11 @@ export function Navbar() {
       icon: PieChart,
       label: 'Invest',
       path: '/investments'
+    },
+    {
+      icon: Play,
+      label: 'Tasks',
+      path: '/tasks'
     },
     {
       icon: Wallet,
@@ -32,7 +37,7 @@ export function Navbar() {
 
   return (
     <nav className="container mx-auto px-4">
-      <div className="grid grid-cols-4 gap-1">
+      <div className="grid grid-cols-5 gap-1">
         {navItems.map((item) => (
           <Link
             key={item.path}

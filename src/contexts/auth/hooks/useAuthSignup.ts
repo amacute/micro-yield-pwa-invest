@@ -1,98 +1,49 @@
 
-import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { AdditionalSignupData } from '../types';
 
-interface AdditionalSignupData {
-  phone?: string;
-  country?: string;
-  referralCode?: string;
-}
-
-export function useAuthSignup(
-  setLoading: (loading: boolean) => void
-) {
-  const navigate = useNavigate();
-
-  const signupUser = async (email: string, password: string, metadata: any) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata
-      }
-    });
-
-    if (error) throw error;
-    return data;
-  };
-
-  const signInWithGoogleProvider = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`
-      }
-    });
-
-    if (error) throw error;
-  };
-
+export function useAuthSignup(setLoading: (loading: boolean) => void) {
   const signup = async (
     name: string, 
     email: string, 
     password: string, 
     additionalData?: AdditionalSignupData
   ): Promise<void> => {
+    setLoading(true);
     try {
-      setLoading(true);
-      
-      // Validate password strength
-      if (password.length < 12) {
-        throw new Error('Password must be at least 12 characters long');
+      // Validate password complexity
+      if (password.length < 8) {
+        throw new Error('Password must be at least 8 characters long');
       }
       
-      const hasUpperCase = /[A-Z]/.test(password);
-      const hasLowerCase = /[a-z]/.test(password);
-      const hasNumbers = /\d/.test(password);
-      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-      
-      if (!hasUpperCase || !hasLowerCase || !hasNumbers || !hasSpecialChar) {
-        throw new Error('Password must contain uppercase, lowercase, numbers, and special characters');
+      if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+        throw new Error('Password must contain at least one uppercase letter, one lowercase letter, and one number');
       }
-      
-      if (additionalData?.phone) {
-        const { data: existingUser } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('phone', additionalData.phone)
-          .single();
-        
-        if (existingUser) {
-          throw new Error('Phone number is already registered');
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            phone: additionalData?.phone,
+            country: additionalData?.country,
+            referral_code: additionalData?.referralCode,
+          }
         }
-      }
+      });
 
-      // Create metadata object for Supabase signup
-      const metadata = {
-        full_name: name,
-        ...(additionalData?.phone && { phone: additionalData.phone }),
-        ...(additionalData?.country && { country: additionalData.country }),
-        ...(additionalData?.referralCode && { referral_code: additionalData.referralCode })
-      };
+      if (error) throw error;
 
-      await signupUser(email, password, metadata);
-
-      if (additionalData?.referralCode) {
-        toast.success(`Account created with referral code: ${additionalData.referralCode}`);
+      if (data.user && !data.user.email_confirmed_at) {
+        toast.success('Please check your email to verify your account');
       } else {
-        toast.success('Account created successfully! Please check your email for verification.');
+        toast.success('Account created successfully');
       }
-      
-      navigate('/dashboard');
     } catch (error: any) {
       console.error('Signup error:', error);
-      toast.error(error.message || 'Signup failed');
+      toast.error(error.message || 'Failed to create account');
       throw error;
     } finally {
       setLoading(false);
@@ -100,14 +51,27 @@ export function useAuthSignup(
   };
 
   const signInWithGoogle = async (): Promise<void> => {
+    setLoading(true);
     try {
-      await signInWithGoogleProvider();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+
+      if (error) throw error;
     } catch (error: any) {
       console.error('Google sign in error:', error);
-      toast.error(error.message || 'Google sign in failed');
+      toast.error(error.message || 'Failed to sign in with Google');
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  return { signup, signInWithGoogle };
+  return {
+    signup,
+    signInWithGoogle
+  };
 }

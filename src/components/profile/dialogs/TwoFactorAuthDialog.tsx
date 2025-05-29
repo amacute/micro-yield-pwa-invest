@@ -25,11 +25,9 @@ export function TwoFactorAuthDialog({ open, onOpenChange }: TwoFactorAuthDialogP
 
   useEffect(() => {
     if (open && !user?.twoFactorEnabled) {
-      // Generate new secret for setup
       const newSecret = generateTOTPSecret();
       setSecret(newSecret);
       
-      // Generate QR code URL
       const issuer = 'Axiomify';
       const accountName = user?.email || '';
       const qrUrl = generateQRCodeURL(newSecret, accountName, issuer);
@@ -72,8 +70,7 @@ export function TwoFactorAuthDialog({ open, onOpenChange }: TwoFactorAuthDialogP
         toast.success(`Two-factor authentication ${action} successfully`);
         
         if (!user.twoFactorEnabled && backupCodes.length > 0) {
-          // Show backup codes for new 2FA setup
-          return; // Don't close dialog yet, show backup codes
+          return;
         }
         
         onOpenChange(false);
@@ -95,7 +92,6 @@ export function TwoFactorAuthDialog({ open, onOpenChange }: TwoFactorAuthDialogP
     setVerificationCode('');
   };
 
-  // Show backup codes after successful 2FA setup
   if (backupCodes.length > 0) {
     return (
       <BackupCodesDisplay

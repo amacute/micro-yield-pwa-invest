@@ -9,30 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      investment_accounts: {
-        Row: {
-          account_number: string
-          account_type: string
-          created_at: string | null
-          id: number
-          user_id: string
-        }
-        Insert: {
-          account_number: string
-          account_type: string
-          created_at?: string | null
-          id?: never
-          user_id: string
-        }
-        Update: {
-          account_number?: string
-          account_type?: string
-          created_at?: string | null
-          id?: never
-          user_id?: string
-        }
-        Relationships: []
-      }
       investments: {
         Row: {
           category: string
@@ -158,54 +134,6 @@ export type Database = {
           risk?: string
           status?: string
           term?: number
-        }
-        Relationships: []
-      }
-      p2p_matching: {
-        Row: {
-          amount: number
-          borrower_id: string
-          created_at: string | null
-          id: number
-          matched_user_id: string
-        }
-        Insert: {
-          amount: number
-          borrower_id: string
-          created_at?: string | null
-          id?: never
-          matched_user_id: string
-        }
-        Update: {
-          amount?: number
-          borrower_id?: string
-          created_at?: string | null
-          id?: never
-          matched_user_id?: string
-        }
-        Relationships: []
-      }
-      p2p_payment: {
-        Row: {
-          amount: number
-          created_at: string | null
-          id: number
-          receiver_id: string
-          sender_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string | null
-          id?: never
-          receiver_id: string
-          sender_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string | null
-          id?: never
-          receiver_id?: string
-          sender_id?: string
         }
         Relationships: []
       }
@@ -434,19 +362,16 @@ export type Database = {
         Returns: Json
       }
       create_p2p_payment: {
-        Args:
-          | {
-              payer_user_id: string
-              payee_user_id: string
-              payment_amount: number
-              payment_purpose?: string
-            }
-          | { referral_code: string; user_id: number }
-          | { sender_id: string; receiver_id: string; amount: number }
+        Args: {
+          payer_user_id: string
+          payee_user_id: string
+          payment_amount: number
+          payment_purpose?: string
+        }
         Returns: Json
       }
       is_admin: {
-        Args: Record<PropertyKey, never> | { user_id: string }
+        Args: { user_id: string }
         Returns: boolean
       }
     }

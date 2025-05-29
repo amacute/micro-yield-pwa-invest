@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { fetchAvailableUsers } from '@/services/admin';
 import { Button } from '@/components/ui/button';
@@ -83,7 +82,7 @@ export function UserMatching() {
         setLoanAmount(0);
         setLoanPurpose('');
         
-        toast.success(`Successfully matched ${selectedLender.name || selectedLender.email} to lend $${loanAmount} to ${selectedBorrower.name || selectedBorrower.email}. 100% profit ($${loanAmount * 2}) will be credited after 72 hours.`);
+        toast.success(`Successfully matched ${selectedLender.name || selectedLender.email} to lend $${loanAmount} to ${selectedBorrower.name || selectedBorrower.email}. 100% profit (${loanAmount * 2}) will be credited after 72 hours.`);
       }
     } catch (error) {
       console.error('Error creating P2P lending match:', error);

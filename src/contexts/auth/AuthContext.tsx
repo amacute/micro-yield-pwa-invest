@@ -3,6 +3,7 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import { AuthContextType } from './types';
 import { useAuthState } from './hooks/useAuthState';
 import { useAuthActions } from './hooks/useAuthActions';
+import { AdminSecurityProvider } from '../admin/AdminSecurityContext';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -42,7 +43,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         ...authActions
       }}
     >
-      {children}
+      <AdminSecurityProvider>
+        {children}
+      </AdminSecurityProvider>
     </AuthContext.Provider>
   );
 };

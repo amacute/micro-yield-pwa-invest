@@ -14,6 +14,7 @@ export type UserType = {
   currencySymbol?: string;
   lastDepositTime?: string;
   twoFactorEnabled?: boolean;
+  twoFactorSecret?: string; // For TOTP secret storage
   phone?: string;
   profileImageUrl?: string;
   passportUrl?: string;

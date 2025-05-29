@@ -2,6 +2,7 @@
 import { toast } from '@/components/ui/sonner';
 import { UserType } from '../types';
 import { verifyUserEmail, resendEmailVerification } from '../services';
+import { enableTwoFactor as enableTwoFactorReal, disableTwoFactor as disableTwoFactorReal } from '../../../services/twoFactorAuthReal';
 
 export function useAuthSecurity(
   user: UserType | null,
@@ -22,8 +23,13 @@ export function useAuthSecurity(
   };
 
   const enableTwoFactor = async (code: string): Promise<boolean> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    if (code.length === 6) {
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      return false;
+    }
+
+    const result = await enableTwoFactorReal(user.id, code);
+    if (result.success) {
       await updateUserProfile({ twoFactorEnabled: true });
       return true;
     }
@@ -31,8 +37,13 @@ export function useAuthSecurity(
   };
 
   const disableTwoFactor = async (code: string): Promise<boolean> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    if (code.length === 6) {
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      return false;
+    }
+
+    const success = await disableTwoFactorReal(user.id, code);
+    if (success) {
       await updateUserProfile({ twoFactorEnabled: false });
       return true;
     }

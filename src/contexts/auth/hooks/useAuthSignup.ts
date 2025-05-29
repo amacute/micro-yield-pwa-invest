@@ -4,13 +4,6 @@ import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { signupUser, signInWithGoogleProvider } from '../services';
 
-interface SimpleSignupData {
-  full_name: string;
-  phone?: string;
-  country?: string;
-  referral_code?: string;
-}
-
 interface AdditionalSignupData {
   phone?: string;
   country?: string;
@@ -43,24 +36,15 @@ export function useAuthSignup(
         }
       }
 
-      // Create simple object with explicit typing to avoid deep instantiation
-      const userData: SimpleSignupData = {
-        full_name: name
+      // Create metadata object for Supabase signup
+      const metadata = {
+        full_name: name,
+        ...(additionalData?.phone && { phone: additionalData.phone }),
+        ...(additionalData?.country && { country: additionalData.country }),
+        ...(additionalData?.referralCode && { referral_code: additionalData.referralCode })
       };
 
-      if (additionalData?.phone) {
-        userData.phone = additionalData.phone;
-      }
-      
-      if (additionalData?.country) {
-        userData.country = additionalData.country;
-      }
-      
-      if (additionalData?.referralCode) {
-        userData.referral_code = additionalData.referralCode;
-      }
-
-      await signupUser(email, password, userData);
+      await signupUser(email, password, metadata);
 
       if (additionalData?.referralCode) {
         toast.success(`Account created with referral code: ${additionalData.referralCode}`);

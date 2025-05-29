@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdmin } from '@/contexts/AdminContext';
+import { useAdminSecurity } from '@/contexts/admin/AdminSecurityContext';
 import { Loader } from '@/components/common/Loader';
 import { toast } from '@/components/ui/sonner';
 
@@ -16,11 +16,11 @@ export default function AdminAuth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [adminKey, setAdminKey] = useState('');
+  const [superAdminCode, setSuperAdminCode] = useState('');
   const [passwordError, setPasswordError] = useState('');
   
   const { login, signup, isLoading } = useAuth();
-  const { checkAdminStatus } = useAdmin();
+  const { checkAdminStatus } = useAdminSecurity();
   const navigate = useNavigate();
 
   const validatePassword = (value: string) => {
@@ -54,11 +54,14 @@ export default function AdminAuth() {
     try {
       await login(email, password);
       
-      // Check if user has admin privileges
-      await checkAdminStatus();
+      // Check if user has admin privileges using database roles
+      const isAdmin = await checkAdminStatus();
       
-      // Note: The actual admin check will be done by the AdminProvider
-      // If user is not admin, they'll be redirected appropriately
+      if (!isAdmin) {
+        toast.error('Insufficient privileges. Admin access required.');
+        return;
+      }
+      
       navigate('/admin');
     } catch (error) {
       toast.error('Invalid credentials or insufficient privileges');
@@ -81,9 +84,9 @@ export default function AdminAuth() {
       return;
     }
     
-    // Validate admin key - using a more secure key
-    if (adminKey !== 'AXIOM_ADMIN_2024_SECURE_KEY_v1.2.3') {
-      toast.error('Invalid admin registration key');
+    // Validate super admin verification code (should be provided by existing super admin)
+    if (!superAdminCode || superAdminCode.length < 8) {
+      toast.error('Invalid super admin verification code. Contact your system administrator.');
       return;
     }
     
@@ -91,9 +94,8 @@ export default function AdminAuth() {
       // Create admin account
       await signup(name, email, password);
       
-      // Note: Admin privileges will need to be granted manually by a super admin
-      // in the database after account creation for security
       toast.success('Admin account created successfully. Admin privileges must be granted by a super administrator.');
+      toast.info('Please contact a super administrator to activate your admin privileges.');
       navigate('/admin');
     } catch (error) {
       toast.error('Failed to create admin account');
@@ -106,14 +108,14 @@ export default function AdminAuth() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Admin Portal</CardTitle>
           <CardDescription className="text-center">
-            Secure administrative access
+            Secure administrative access with role-based authentication
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid grid-cols-2 mb-4">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Create Account</TabsTrigger>
+              <TabsTrigger value="login">Admin Login</TabsTrigger>
+              <TabsTrigger value="signup">Request Access</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
@@ -151,6 +153,10 @@ export default function AdminAuth() {
                 >
                   {isLoading ? <Loader size="small" color="text-white" /> : 'Secure Admin Login'}
                 </Button>
+                
+                <div className="text-xs text-center text-muted-foreground">
+                  Admin access is verified through database role management
+                </div>
               </form>
             </TabsContent>
             
@@ -211,19 +217,19 @@ export default function AdminAuth() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="admin-key" className="text-sm font-medium">
-                    Admin Registration Key
+                  <label htmlFor="super-admin-code" className="text-sm font-medium">
+                    Super Admin Verification Code
                   </label>
                   <Input
-                    id="admin-key"
+                    id="super-admin-code"
                     type="password"
-                    placeholder="Enter secure admin registration key"
-                    value={adminKey}
-                    onChange={(e) => setAdminKey(e.target.value)}
+                    placeholder="Enter verification code from super admin"
+                    value={superAdminCode}
+                    onChange={(e) => setSuperAdminCode(e.target.value)}
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Secure admin registration key required. Contact your system administrator.
+                    This code must be provided by an existing super administrator. Contact your system administrator.
                   </p>
                 </div>
                 
@@ -232,7 +238,7 @@ export default function AdminAuth() {
                   className="w-full btn-gradient" 
                   disabled={isLoading || !!passwordError}
                 >
-                  {isLoading ? <Loader size="small" color="text-white" /> : 'Create Secure Admin Account'}
+                  {isLoading ? <Loader size="small" color="text-white" /> : 'Request Admin Access'}
                 </Button>
               </form>
             </TabsContent>
@@ -242,8 +248,8 @@ export default function AdminAuth() {
           <Link to="/" className="text-center text-sm text-axiom-primary hover:underline w-full">
             Return to Home
           </Link>
-          <p className="text-center text-xs text-red-600 mt-4">
-            ⚠️ Admin access requires proper authorization
+          <p className="text-center text-xs text-amber-600 mt-4">
+            🔒 Admin privileges are managed through secure database roles
           </p>
         </CardFooter>
       </Card>

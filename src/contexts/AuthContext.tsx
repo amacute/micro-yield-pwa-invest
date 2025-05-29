@@ -138,29 +138,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(true);
       setError(null);
 
-      // Create auth user
+      // Create auth user with metadata
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: name
+          }
+        }
       });
 
       if (error) throw error;
 
       if (data.user) {
-        // Create user profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email,
-            full_name: name,
-            wallet_balance: 0,
-            total_invested: 0,
-            total_returns: 0,
-          });
-
-        if (profileError) throw profileError;
-
         navigate('/verify-email');
       }
     } catch (error) {

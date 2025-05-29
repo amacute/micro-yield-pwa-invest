@@ -23,73 +23,21 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
   const { user, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: user?.name || '',
-    phone: user?.phone || '',
-    country: user?.country || '',
-    currency: user?.currency || 'USD'
+    full_name: user?.name || '',
+    email: user?.email || ''
   });
-  const [passportFile, setPassportFile] = useState<File | null>(null);
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, type: 'passport' | 'profile') => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (type === 'passport') {
-        setPassportFile(file);
-      } else {
-        setProfileImageFile(file);
-      }
-    }
-  };
-
-  const uploadFile = async (file: File, bucket: string, path: string) => {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, { upsert: true });
-    
-    if (error) throw error;
-    return data;
-  };
 
   const handleSave = async () => {
     if (!user) return;
     
     setLoading(true);
     try {
-      let passportUrl = user.passportUrl;
-      let profileImageUrl = user.profileImageUrl;
-
-      // Upload passport if new file selected
-      if (passportFile) {
-        const passportPath = `passports/${user.id}/${Date.now()}_${passportFile.name}`;
-        await uploadFile(passportFile, 'documents', passportPath);
-        const { data } = supabase.storage.from('documents').getPublicUrl(passportPath);
-        passportUrl = data.publicUrl;
-      }
-
-      // Upload profile image if new file selected
-      if (profileImageFile) {
-        const imagePath = `profiles/${user.id}/${Date.now()}_${profileImageFile.name}`;
-        await uploadFile(profileImageFile, 'profiles', imagePath);
-        const { data } = supabase.storage.from('profiles').getPublicUrl(imagePath);
-        profileImageUrl = data.publicUrl;
-      }
-
-      // Get currency symbol
-      const selectedCountry = allCountries.find(c => c.name === profileData.country);
-      const currencySymbol = selectedCountry?.symbol || '$';
-
-      // Update user data
+      // Update user data in profiles table
       const { error } = await supabase
-        .from('users')
+        .from('profiles')
         .update({
-          name: profileData.name,
-          phone: profileData.phone,
-          country: profileData.country,
-          currency: profileData.currency,
-          currency_symbol: currencySymbol,
-          passport_url: passportUrl,
-          profile_image_url: profileImageUrl
+          full_name: profileData.full_name,
+          email: profileData.email
         })
         .eq('id', user.id);
 
@@ -98,13 +46,8 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
       // Update local user state
       await updateUser({
         ...user,
-        name: profileData.name,
-        phone: profileData.phone,
-        country: profileData.country,
-        currency: profileData.currency,
-        currencySymbol: currencySymbol,
-        passportUrl,
-        profileImageUrl
+        name: profileData.full_name,
+        email: profileData.email
       });
 
       toast.success('Profile updated successfully');
@@ -131,9 +74,9 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
             <Card className="border-dashed border-2">
               <CardContent className="p-6 text-center">
                 <div className="flex flex-col items-center gap-4">
-                  {user?.profileImageUrl ? (
+                  {user?.avatar_url ? (
                     <img 
-                      src={user.profileImageUrl} 
+                      src={user.avatar_url} 
                       alt="Profile" 
                       className="w-20 h-20 rounded-full object-cover"
                     />
@@ -144,26 +87,10 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
                   )}
                   
                   <div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileChange(e, 'profile')}
-                      className="hidden"
-                      id="profile-upload"
-                    />
-                    <Label htmlFor="profile-upload" className="cursor-pointer">
-                      <Button variant="outline" size="sm" asChild>
-                        <span>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Photo
-                        </span>
-                      </Button>
-                    </Label>
-                    {profileImageFile && (
-                      <p className="text-sm text-green-600 mt-2">
-                        New image selected: {profileImageFile.name}
-                      </p>
-                    )}
+                    <Button variant="outline" size="sm">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Photo
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -171,103 +98,27 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
           </div>
 
           {/* Basic Information */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
-                value={profileData.name}
-                onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                value={profileData.full_name}
+                onChange={(e) => setProfileData({...profileData, full_name: e.target.value})}
                 placeholder="Enter your full name"
               />
             </div>
             
             <div>
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="phone"
-                value={profileData.phone}
-                onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                placeholder="Enter your phone number"
+                id="email"
+                value={profileData.email}
+                onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                placeholder="Enter your email"
+                type="email"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="country">Country</Label>
-              <Select value={profileData.country} onValueChange={(value) => {
-                const country = allCountries.find(c => c.name === value);
-                setProfileData({
-                  ...profileData, 
-                  country: value,
-                  currency: country?.currency || 'USD'
-                });
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select country" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allCountries.map(country => (
-                    <SelectItem key={country.code} value={country.name}>
-                      {country.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="currency">Currency</Label>
-              <Input
-                id="currency"
-                value={profileData.currency}
-                readOnly
-                placeholder="Currency"
-              />
-            </div>
-          </div>
-
-          {/* Passport Upload */}
-          <div>
-            <Label className="text-sm mb-2 block">Passport/ID Document</Label>
-            <Card className="border-dashed border-2">
-              <CardContent className="p-6 text-center">
-                <div className="flex flex-col items-center gap-4">
-                  <Upload className="h-12 w-12 text-muted-foreground" />
-                  <div>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => handleFileChange(e, 'passport')}
-                      className="hidden"
-                      id="passport-upload"
-                    />
-                    <Label htmlFor="passport-upload" className="cursor-pointer">
-                      <Button variant="outline" asChild>
-                        <span>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Passport/ID
-                        </span>
-                      </Button>
-                    </Label>
-                    {passportFile ? (
-                      <p className="text-sm text-green-600 mt-2">
-                        Selected: {passportFile.name}
-                      </p>
-                    ) : user?.passportUrl ? (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Document already uploaded
-                      </p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Upload your passport or government-issued ID
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
         

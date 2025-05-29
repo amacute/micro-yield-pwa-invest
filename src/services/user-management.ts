@@ -5,7 +5,7 @@ import { toast } from "@/components/ui/sonner";
 // User management
 export const fetchUsers = async () => {
   const { data, error } = await supabase
-    .from('users')
+    .from('profiles')
     .select('*')
     .order('created_at', { ascending: false });
   
@@ -18,10 +18,10 @@ export const fetchUsers = async () => {
   return data || [];
 };
 
-// P2P User Matching - Updated to work with real users who have made deposits
+// P2P User Matching - Updated to work with profiles table
 export const fetchAvailableUsers = async () => {
   const { data, error } = await supabase
-    .from('users')
+    .from('profiles')
     .select('*')
     .gt('wallet_balance', 0)
     .order('wallet_balance', { ascending: false });

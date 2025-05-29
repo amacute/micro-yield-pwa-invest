@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { fetchUsers } from '@/services/admin';
 import { toast } from '@/components/ui/sonner';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Check, AlertCircle, Search, UserRoundCog } from 'lucide-react';
+import { Loader2, Search, UserRoundCog } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Dialog,
@@ -38,7 +39,7 @@ export function UserManagement() {
     if (searchQuery) {
       const filtered = users.filter(
         user => 
-          user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           user.email.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredUsers(filtered);
@@ -50,34 +51,6 @@ export function UserManagement() {
   const handleViewUser = (user: any) => {
     setSelectedUser(user);
     setShowUserDialog(true);
-  };
-  
-  const handleVerifyKYC = async (userId: string) => {
-    try {
-      // In a real app, this would be an admin-only operation with proper confirmation
-      const { error } = await supabase
-        .from('users')
-        .update({ kyc_verified: true })
-        .eq('id', userId);
-        
-      if (error) throw error;
-      
-      // Update the local state
-      const updatedUsers = users.map(u => 
-        u.id === userId ? { ...u, kyc_verified: true } : u
-      );
-      setUsers(updatedUsers);
-      setFilteredUsers(updatedUsers.filter(
-        u => 
-          u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          u.email.toLowerCase().includes(searchQuery.toLowerCase())
-      ));
-      
-      toast.success('User KYC verified successfully');
-    } catch (error) {
-      console.error('Error verifying KYC:', error);
-      toast.error('Failed to verify user KYC');
-    }
   };
   
   if (loading) {
@@ -119,49 +92,23 @@ export function UserManagement() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Balance</TableHead>
-                <TableHead>KYC Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredUsers.map(user => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.name || "—"}</TableCell>
+                  <TableCell>{user.full_name || "—"}</TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>${user.wallet_balance.toFixed(2)}</TableCell>
+                  <TableCell>${(user.wallet_balance || 0).toFixed(2)}</TableCell>
                   <TableCell>
-                    {user.kyc_verified ? (
-                      <span className="flex items-center text-green-600 dark:text-green-400">
-                        <Check className="h-4 w-4 mr-1" />
-                        Verified
-                      </span>
-                    ) : (
-                      <span className="flex items-center text-amber-600 dark:text-amber-400">
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        Pending
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleViewUser(user)}
-                      >
-                        View
-                      </Button>
-                      
-                      {!user.kyc_verified && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleVerifyKYC(user.id)}
-                        >
-                          Verify KYC
-                        </Button>
-                      )}
-                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewUser(user)}
+                    >
+                      View
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -184,7 +131,7 @@ export function UserManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Name</p>
-                  <p className="font-medium">{selectedUser.name || "—"}</p>
+                  <p className="font-medium">{selectedUser.full_name || "—"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Email</p>
@@ -192,23 +139,15 @@ export function UserManagement() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Wallet Balance</p>
-                  <p className="font-medium">${selectedUser.wallet_balance.toFixed(2)}</p>
+                  <p className="font-medium">${(selectedUser.wallet_balance || 0).toFixed(2)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">KYC Status</p>
-                  <p className="font-medium">
-                    {selectedUser.kyc_verified ? (
-                      <span className="flex items-center text-green-600 dark:text-green-400">
-                        <Check className="h-4 w-4 mr-1" />
-                        Verified
-                      </span>
-                    ) : (
-                      <span className="flex items-center text-amber-600 dark:text-amber-400">
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        Pending
-                      </span>
-                    )}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Total Invested</p>
+                  <p className="font-medium">${(selectedUser.total_invested || 0).toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Returns</p>
+                  <p className="font-medium">${(selectedUser.total_returns || 0).toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Created At</p>

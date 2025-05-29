@@ -41,9 +41,9 @@ export function MatchSummaryCard({
             <h4 className="font-medium">Lender</h4>
             {selectedLender ? (
               <div className="flex items-center gap-2 mt-1">
-                <Badge variant="outline">{selectedLender.name || selectedLender.email}</Badge>
+                <Badge variant="outline">{selectedLender.full_name || selectedLender.email}</Badge>
                 <span className="text-sm text-muted-foreground">
-                  Available: ${Number(selectedLender.wallet_balance).toFixed(2)}
+                  Available: ${Number(selectedLender.wallet_balance || 0).toFixed(2)}
                 </span>
               </div>
             ) : (
@@ -58,9 +58,9 @@ export function MatchSummaryCard({
             {selectedBorrower ? (
               <div className="flex items-center justify-end gap-2 mt-1">
                 <span className="text-sm text-muted-foreground">
-                  Balance: ${Number(selectedBorrower.wallet_balance).toFixed(2)}
+                  Balance: ${Number(selectedBorrower.wallet_balance || 0).toFixed(2)}
                 </span>
-                <Badge variant="outline">{selectedBorrower.name || selectedBorrower.email}</Badge>
+                <Badge variant="outline">{selectedBorrower.full_name || selectedBorrower.email}</Badge>
               </div>
             ) : (
               <p className="text-muted-foreground text-sm">No borrower selected</p>

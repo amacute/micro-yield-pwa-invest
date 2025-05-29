@@ -17,7 +17,7 @@ export function useUserMatching() {
     const loadUsers = async () => {
       const data = await fetchAvailableUsers();
       // Filter users who have made deposits
-      const eligibleUsers = data.filter(user => user.wallet_balance > 0);
+      const eligibleUsers = data.filter(user => (user.wallet_balance || 0) > 0);
       setUsers(eligibleUsers);
       setLoading(false);
     };
@@ -41,7 +41,7 @@ export function useUserMatching() {
       return;
     }
     
-    if (loanAmount > selectedLender.wallet_balance) {
+    if (loanAmount > (selectedLender.wallet_balance || 0)) {
       toast.error('Lender has insufficient funds');
       return;
     }
@@ -49,35 +49,48 @@ export function useUserMatching() {
     try {
       setProcessing(true);
       
-      // Create a P2P payment record using correct column names
+      // Create a transaction record for the P2P lending
       const { data, error } = await supabase
-        .from('p2p_payments')
+        .from('transactions')
         .insert({
-          payer_id: selectedLender.id,
-          payee_id: selectedBorrower.id,
+          user_id: selectedLender.id,
           amount: loanAmount,
-          purpose: loanPurpose || 'P2P Loan',
-          status: 'completed'
+          type: 'p2p_lending',
+          status: 'completed',
+          description: `P2P loan to ${selectedBorrower.full_name || selectedBorrower.email}: ${loanPurpose || 'P2P Loan'}`
         })
         .select()
         .single();
       
       if (error) throw error;
       
+      // Create corresponding transaction for borrower
+      const { error: borrowerTxError } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: selectedBorrower.id,
+          amount: loanAmount,
+          type: 'p2p_received',
+          status: 'completed',
+          description: `P2P loan received from ${selectedLender.full_name || selectedLender.email}: ${loanPurpose || 'P2P Loan'}`
+        });
+      
+      if (borrowerTxError) throw borrowerTxError;
+      
       // Update wallet balances
       const { error: lenderError } = await supabase
-        .from('users')
+        .from('profiles')
         .update({ 
-          wallet_balance: selectedLender.wallet_balance - loanAmount 
+          wallet_balance: (selectedLender.wallet_balance || 0) - loanAmount 
         })
         .eq('id', selectedLender.id);
       
       if (lenderError) throw lenderError;
       
       const { error: borrowerError } = await supabase
-        .from('users')
+        .from('profiles')
         .update({ 
-          wallet_balance: selectedBorrower.wallet_balance + loanAmount 
+          wallet_balance: (selectedBorrower.wallet_balance || 0) + loanAmount 
         })
         .eq('id', selectedBorrower.id);
       
@@ -85,13 +98,13 @@ export function useUserMatching() {
       
       // Refresh users data
       const updatedData = await fetchAvailableUsers();
-      const eligibleUsers = updatedData.filter(user => user.wallet_balance > 0);
+      const eligibleUsers = updatedData.filter(user => (user.wallet_balance || 0) > 0);
       setUsers(eligibleUsers);
       
       // Reset form
       resetSelection();
       
-      toast.success(`Successfully matched ${selectedLender.name || selectedLender.email} to lend $${loanAmount} to ${selectedBorrower.name || selectedBorrower.email}. 100% profit (${loanAmount * 2}) will be credited after 72 hours.`);
+      toast.success(`Successfully matched ${selectedLender.full_name || selectedLender.email} to lend $${loanAmount} to ${selectedBorrower.full_name || selectedBorrower.email}. 100% profit (${loanAmount * 2}) will be credited after 72 hours.`);
       
     } catch (error) {
       console.error('Error creating P2P lending match:', error);

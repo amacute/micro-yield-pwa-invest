@@ -104,15 +104,21 @@ export const fetchAvailableInvestors = async () => {
   return data || [];
 };
 
-// Create P2P match using available database functions
+// Create P2P match - simplified without RPC
 export const createP2PMatch = async (loanId: string, investors: { id: string, amount: number }[]) => {
   try {
-    // Use the available create_p2p_match function
+    // Create matches directly in the p2p_matches table
+    const matches = investors.map(investor => ({
+      loan_id: loanId,
+      investor_id: investor.id,
+      amount: investor.amount,
+      status: 'active'
+    }));
+
     const { data, error } = await supabase
-      .rpc('create_p2p_match', {
-        loan_id: loanId,
-        investor_data: investors
-      });
+      .from('p2p_matches')
+      .insert(matches)
+      .select();
     
     if (error) throw error;
     
@@ -129,12 +135,16 @@ export const createP2PMatch = async (loanId: string, investors: { id: string, am
 export const createLendingMatch = async (lenderId: string, borrowerId: string, amount: number, purpose?: string) => {
   try {
     const { data, error } = await supabase
-      .rpc('create_p2p_payment', {
-        from_user_id: lenderId,
-        to_user_id: borrowerId,
-        amount: amount,
-        purpose: purpose || 'P2P Loan'
-      });
+      .from('p2p_payments')
+      .insert({
+        payer_user_id: lenderId,
+        payee_user_id: borrowerId,
+        payment_amount: amount,
+        payment_purpose: purpose || 'P2P Loan',
+        status: 'completed'
+      })
+      .select()
+      .single();
     
     if (error) throw error;
     
@@ -166,7 +176,7 @@ export const fetchDeposits = async () => {
   return data || [];
 };
 
-// Simple deposit approval without RPC function
+// Simple deposit approval
 export const approveDeposit = async (depositId: string, amount: number, userId: string) => {
   try {
     // Update the deposit status
@@ -177,12 +187,20 @@ export const approveDeposit = async (depositId: string, amount: number, userId: 
     
     if (depositError) throw depositError;
     
+    // Get current user balance
+    const { data: userData, error: userFetchError } = await supabase
+      .from('users')
+      .select('wallet_balance')
+      .eq('user_id', userId)
+      .single();
+    
+    if (userFetchError) throw userFetchError;
+    
     // Update user wallet balance
+    const newBalance = (userData?.wallet_balance || 0) + amount;
     const { error: walletError } = await supabase
       .from('users')
-      .update({ 
-        wallet_balance: supabase.sql`wallet_balance + ${amount}`
-      })
+      .update({ wallet_balance: newBalance })
       .eq('user_id', userId);
     
     if (walletError) throw walletError;
@@ -202,8 +220,8 @@ export const fetchLendingMatches = async () => {
     .from('p2p_payments')
     .select(`
       *,
-      lender:users!p2p_payments_from_user_id_fkey(name, email),
-      borrower:users!p2p_payments_to_user_id_fkey(name, email)
+      lender:users!p2p_payments_payer_user_id_fkey(name, email),
+      borrower:users!p2p_payments_payee_user_id_fkey(name, email)
     `)
     .order('created_at', { ascending: false });
   
@@ -252,9 +270,9 @@ export const fetchAnalyticsData = async () => {
     
     const { data: p2pVolume } = await supabase
       .from('p2p_payments')
-      .select('amount');
+      .select('payment_amount');
     
-    const totalP2PVolume = p2pVolume?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
+    const totalP2PVolume = p2pVolume?.reduce((sum, payment) => sum + (payment.payment_amount || 0), 0) || 0;
     
     return {
       userStats: {

@@ -2,7 +2,8 @@
 import { Navigate } from 'react-router-dom';
 
 const Index = () => {
-  return <Navigate to="/" replace />;
+  // Redirect to landing page instead of root to avoid circular routing
+  return <Navigate to="/dashboard" replace />;
 };
 
 export default Index;

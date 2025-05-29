@@ -4,11 +4,6 @@ import { fetchAvailableUsers } from '@/services/admin';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 
-interface ApiResponse {
-  success: boolean;
-  message?: string;
-}
-
 export function useUserMatching() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,10 +53,10 @@ export function useUserMatching() {
       const { data, error } = await supabase
         .from('p2p_payments')
         .insert({
-          from_user_id: selectedLender.user_id,
-          to_user_id: selectedBorrower.user_id,
-          amount: loanAmount,
-          purpose: loanPurpose || 'P2P Loan',
+          payer_user_id: selectedLender.user_id,
+          payee_user_id: selectedBorrower.user_id,
+          payment_amount: loanAmount,
+          payment_purpose: loanPurpose || 'P2P Loan',
           status: 'completed'
         })
         .select()

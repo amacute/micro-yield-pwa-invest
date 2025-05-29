@@ -57,6 +57,7 @@ export function useAuthState() {
     session,
     setSession,
     loading,
+    setLoading,
     isAuthenticated
   };
 }

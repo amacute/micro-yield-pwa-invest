@@ -24,6 +24,7 @@ import Dashboard from '@/pages/Dashboard';
 import Profile from '@/pages/Profile';
 import Investments from '@/pages/investments/Investments';
 import InvestmentDetails from '@/pages/investments/InvestmentDetails';
+import P2PLending from '@/pages/investments/P2PLending';
 import Wallet from '@/pages/wallet/Wallet';
 import Tasks from '@/pages/Tasks';
 
@@ -56,6 +57,7 @@ function App() {
                   <Route path="profile" element={<Profile />} />
                   <Route path="investments" element={<Investments />} />
                   <Route path="investments/:id" element={<InvestmentDetails />} />
+                  <Route path="p2p-lending" element={<P2PLending />} />
                   <Route path="wallet" element={<Wallet />} />
                   <Route path="tasks" element={<Tasks />} />
                   

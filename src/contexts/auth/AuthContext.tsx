@@ -25,10 +25,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     session,
     setSession,
     loading,
+    setLoading,
     isAuthenticated
   } = useAuthState();
 
-  const authActions = useAuthActions(user, session, setUser, setSession, (loading: boolean) => {});
+  const authActions = useAuthActions(user, session, setUser, setSession, setLoading);
 
   return (
     <AuthContext.Provider

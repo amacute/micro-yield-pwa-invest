@@ -48,6 +48,60 @@ export type Database = {
         }
         Relationships: []
       }
+      loans: {
+        Row: {
+          amount_lent: number
+          amount_to_repay: number
+          borrower_contact: Json | null
+          borrower_deposit_made: boolean
+          borrower_id: string | null
+          borrower_payment_received: boolean
+          created_at: string
+          id: string
+          lender_contact: Json
+          lender_id: string
+          lender_payment_confirmed: boolean
+          match_date: string | null
+          status: string
+          updated_at: string
+          withdrawal_ready_date: string | null
+        }
+        Insert: {
+          amount_lent: number
+          amount_to_repay: number
+          borrower_contact?: Json | null
+          borrower_deposit_made?: boolean
+          borrower_id?: string | null
+          borrower_payment_received?: boolean
+          created_at?: string
+          id?: string
+          lender_contact: Json
+          lender_id: string
+          lender_payment_confirmed?: boolean
+          match_date?: string | null
+          status?: string
+          updated_at?: string
+          withdrawal_ready_date?: string | null
+        }
+        Update: {
+          amount_lent?: number
+          amount_to_repay?: number
+          borrower_contact?: Json | null
+          borrower_deposit_made?: boolean
+          borrower_id?: string | null
+          borrower_payment_received?: boolean
+          created_at?: string
+          id?: string
+          lender_contact?: Json
+          lender_id?: string
+          lender_payment_confirmed?: boolean
+          match_date?: string | null
+          status?: string
+          updated_at?: string
+          withdrawal_ready_date?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

@@ -10,7 +10,7 @@ export function ReferralSystem() {
           Your friends will also receive a $10 bonus when they make their first investment!
         </p>
       </div>
-      
+
       <ReferralInfo />
     </div>
   );

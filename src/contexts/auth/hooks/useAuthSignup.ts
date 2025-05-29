@@ -4,7 +4,7 @@ import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { signupUser, signInWithGoogleProvider } from '../services';
 
-interface SignupUserData {
+interface SimpleSignupData {
   full_name: string;
   phone?: string;
   country?: string;
@@ -43,8 +43,8 @@ export function useAuthSignup(
         }
       }
 
-      // Create simple object with explicit typing
-      const userData: SignupUserData = {
+      // Create simple object with explicit typing to avoid deep instantiation
+      const userData: SimpleSignupData = {
         full_name: name
       };
 

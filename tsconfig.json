@@ -9,6 +9,7 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "emitDeclarationOnly": true
     "jsx": "react-jsx",
     "strict": true,
     "noUnusedLocals": true,
@@ -20,21 +21,11 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "types": ["vite/client", "vite-plugin-pwa/client"],
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "sourceMap": true,
-    "outDir": "./dist",
-    "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "emitDeclarationOnly": true
+    "types": ["vite/client", "vite-plugin-pwa/client"]
   },
-  "include": ["src", "tests"],
-  "exclude": ["node_modules", "dist", "build"],
-  "references": [{ "path": "./tsconfig.node.json" }]
-}
+  "include": ["src"],
+  "exclude": ["vite.config.ts"],
+  "references": [
+  { "path": "./tsconfig.local.json" }
+]
 

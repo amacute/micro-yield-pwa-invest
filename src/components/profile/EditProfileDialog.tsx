@@ -74,9 +74,9 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
             <Card className="border-dashed border-2">
               <CardContent className="p-6 text-center">
                 <div className="flex flex-col items-center gap-4">
-                  {user?.avatar_url ? (
+                  {user?.profileImageUrl ? (
                     <img 
-                      src={user.avatar_url} 
+                      src={user.profileImageUrl} 
                       alt="Profile" 
                       className="w-20 h-20 rounded-full object-cover"
                     />

@@ -10,7 +10,7 @@ type UserType = {
   name: string;
   email: string;
   walletBalance: number;
-  avatar?: string;
+  avatar_url?: string;
   kycVerified: boolean;
   country?: string;
   currency?: string;
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const transformUser = (authUser: User, userData: any): UserType => {
     return {
       id: authUser.id,
-      name: userData?.name || authUser.user_metadata?.name || authUser.user_metadata?.full_name || '',
+      name: userData?.full_name || authUser.user_metadata?.name || authUser.user_metadata?.full_name || '',
       email: authUser.email || '',
       phone: userData?.phone || authUser.phone || '',
       walletBalance: userData?.wallet_balance || 0,
@@ -90,9 +90,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       currency: userData?.currency || 'USD',
       currencySymbol: userData?.currency_symbol || '$',
       twoFactorEnabled: userData?.two_factor_enabled || false,
-      profileImageUrl: userData?.profile_image_url || '',
+      profileImageUrl: userData?.avatar_url || '',
       passportUrl: userData?.passport_url || '',
-      avatar: userData?.profile_image_url,
+      avatar_url: userData?.avatar_url,
       sessions: [] // Will be populated separately if needed
     };
   };
@@ -100,9 +100,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Fetch user profile data
   const fetchUserProfile = async (userId: string) => {
     const { data, error } = await supabase
-      .from('users')
+      .from('profiles')
       .select('*')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .single();
 
     if (error && error.code !== 'PGRST116') {
@@ -187,7 +187,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Check if phone number is already used
       if (additionalData?.phone) {
         const { data: existingUser } = await supabase
-          .from('users')
+          .from('profiles')
           .select('id')
           .eq('phone', additionalData.phone)
           .single();
@@ -202,7 +202,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         password,
         options: {
           data: {
-            name,
+            full_name: name,
             phone: additionalData?.phone,
             country: additionalData?.country,
             referral_code: additionalData?.referralCode
@@ -264,19 +264,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     try {
       const { error } = await supabase
-        .from('users')
+        .from('profiles')
         .update({
-          name: updates.name,
-          phone: updates.phone,
-          country: updates.country,
-          currency: updates.currency,
-          currency_symbol: updates.currencySymbol,
-          two_factor_enabled: updates.twoFactorEnabled,
-          profile_image_url: updates.profileImageUrl,
-          passport_url: updates.passportUrl,
+          full_name: updates.name,
+          email: updates.email,
+          avatar_url: updates.profileImageUrl,
+          wallet_balance: updates.walletBalance,
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', user.id);
+        .eq('id', user.id);
 
       if (error) throw error;
 

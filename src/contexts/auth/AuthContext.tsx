@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<void> => {
     try {
       setLoading(true);
       await loginUser(email, password);
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     phone?: string;
     country?: string;
     referralCode?: string;
-  }) => {
+  }): Promise<void> => {
     try {
       setLoading(true);
       
@@ -144,7 +144,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (): Promise<void> => {
     try {
       await signInWithGoogleProvider();
     } catch (error: any) {
@@ -154,7 +154,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       await logoutUser();
       setUser(null);
@@ -166,7 +166,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const updateUserProfile = async (updates: Partial<UserType>) => {
+  const updateUserProfile = async (updates: Partial<UserType>): Promise<void> => {
     if (!user || !session) return;
 
     try {
@@ -179,11 +179,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const updateUser = async (updatedUser: UserType) => {
+  const updateUser = async (updatedUser: UserType): Promise<void> => {
     await updateUserProfile(updatedUser);
   };
 
-  const updatePassword = async (currentPassword: string, newPassword: string) => {
+  const updatePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
     try {
       await updateUserPassword(newPassword);
       toast.success('Password updated successfully');
@@ -198,7 +198,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return await verifyUserEmail(token);
   };
 
-  const sendEmailVerification = async (email: string) => {
+  const sendEmailVerification = async (email: string): Promise<void> => {
     try {
       await resendEmailVerification(email);
       toast.success('Verification email sent');
@@ -208,7 +208,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const updateCurrency = (currency: string, symbol: string) => {
+  const updateCurrency = (currency: string, symbol: string): void => {
     updateUserProfile({ currency, currencySymbol: symbol });
   };
 
@@ -232,37 +232,40 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return false;
   };
 
-  const getSessions = () => {
+  const getSessions = (): Array<any> => {
     return user?.sessions || [];
   };
 
-  const terminateSession = async (sessionId: string) => {
+  const terminateSession = async (sessionId: string): Promise<void> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     // Implementation would terminate specific session
   };
 
+  // Explicitly type the context value
+  const contextValue: AuthContextType = {
+    user,
+    loading,
+    isLoading: loading,
+    isAuthenticated,
+    session,
+    login,
+    signup,
+    logout,
+    updateUserProfile,
+    updateUser,
+    updatePassword,
+    verifyEmail,
+    sendEmailVerification,
+    updateCurrency,
+    enableTwoFactor,
+    disableTwoFactor,
+    getSessions,
+    terminateSession,
+    signInWithGoogle
+  };
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      isLoading: loading,
-      isAuthenticated,
-      session,
-      login, 
-      signup, 
-      logout, 
-      updateUserProfile,
-      updateUser,
-      updatePassword,
-      verifyEmail,
-      sendEmailVerification,
-      updateCurrency,
-      enableTwoFactor,
-      disableTwoFactor,
-      getSessions,
-      terminateSession,
-      signInWithGoogle
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

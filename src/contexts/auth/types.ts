@@ -37,8 +37,8 @@ export type AuthContextType = {
     country?: string;
     referralCode?: string;
   }) => Promise<void>;
-  logout: () => void;
-  updateUserProfile?: (updates: Partial<UserType>) => void;
+  logout: () => Promise<void>;
+  updateUserProfile?: (updates: Partial<UserType>) => Promise<void>;
   updateUser?: (user: UserType) => Promise<void>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   verifyEmail: (token: string) => Promise<boolean>;

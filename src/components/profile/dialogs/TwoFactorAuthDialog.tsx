@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { QrCode, Shield, ShieldOff, Copy } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
-import { generateTOTPSecret, enableTwoFactorAuth, disableTwoFactorAuth } from '@/services/twoFactorAuth';
+import { generateTOTPSecret, generateQRCodeURL, enableTwoFactor, disableTwoFactor } from '@/services/twoFactorAuthReal';
 
 interface TwoFactorAuthDialogProps {
   open: boolean;
@@ -32,7 +32,7 @@ export function TwoFactorAuthDialog({ open, onOpenChange }: TwoFactorAuthDialogP
       // Generate QR code URL
       const issuer = 'Axiomify';
       const accountName = user?.email || '';
-      const qrUrl = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(accountName)}?secret=${newSecret}&issuer=${encodeURIComponent(issuer)}`;
+      const qrUrl = generateQRCodeURL(newSecret, accountName, issuer);
       setQrCodeUrl(qrUrl);
     }
   }, [open, user?.twoFactorEnabled, user?.email]);
@@ -53,9 +53,9 @@ export function TwoFactorAuthDialog({ open, onOpenChange }: TwoFactorAuthDialogP
       let success = false;
       
       if (user.twoFactorEnabled) {
-        success = await disableTwoFactorAuth(user.id, verificationCode);
+        success = await disableTwoFactor(user.id, verificationCode);
       } else {
-        const result = await enableTwoFactorAuth(user.id, verificationCode);
+        const result = await enableTwoFactor(user.id, verificationCode);
         success = result.success;
         if (success && result.backupCodes) {
           setBackupCodes(result.backupCodes);
@@ -63,7 +63,7 @@ export function TwoFactorAuthDialog({ open, onOpenChange }: TwoFactorAuthDialogP
       }
 
       if (success) {
-        updateUserProfile?.({
+        await updateUserProfile?.({
           ...user,
           twoFactorEnabled: !user.twoFactorEnabled
         });

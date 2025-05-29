@@ -1,17 +1,21 @@
 
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from '@/components/ui/sonner';
 
 interface AdminSecurityContextType {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   adminRole: string | null;
+  sessionTimeout: number;
+  lastActivity: number;
   checkAdminStatus: () => Promise<boolean>;
   grantAdminRole: (userId: string, role: 'admin' | 'super_admin') => Promise<boolean>;
   revokeAdminRole: (userId: string) => Promise<boolean>;
   auditLog: (action: string, tableName?: string, recordId?: string, oldValues?: any, newValues?: any) => Promise<void>;
+  refreshAdminSession: () => void;
+  isSessionValid: () => boolean;
 }
 
 const AdminSecurityContext = createContext<AdminSecurityContextType | undefined>(undefined);
@@ -29,9 +33,28 @@ export const AdminSecurityProvider = ({ children }: { children: ReactNode }) => 
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [adminRole, setAdminRole] = useState<string | null>(null);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const sessionTimeout = 15 * 60 * 1000; // 15 minutes
+
+  const refreshAdminSession = () => {
+    setLastActivity(Date.now());
+  };
+
+  const isSessionValid = (): boolean => {
+    return Date.now() - lastActivity < sessionTimeout;
+  };
 
   const checkAdminStatus = async (): Promise<boolean> => {
-    if (!user?.id) {
+    if (!user?.id || !session) {
+      setIsAdmin(false);
+      setIsSuperAdmin(false);
+      setAdminRole(null);
+      return false;
+    }
+
+    // Check session validity
+    if (!isSessionValid()) {
+      toast.error('Admin session expired. Please log in again.');
       setIsAdmin(false);
       setIsSuperAdmin(false);
       setAdminRole(null);
@@ -39,29 +62,31 @@ export const AdminSecurityProvider = ({ children }: { children: ReactNode }) => 
     }
 
     try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('role', { ascending: true }) // super_admin comes first alphabetically
-        .limit(1)
-        .single();
+      // Use the database function to get user role securely
+      const { data, error } = await supabase.rpc('get_user_role', {
+        user_uuid: user.id
+      });
 
-      if (error || !data) {
+      if (error) {
+        console.error('Error checking admin status:', error);
         setIsAdmin(false);
         setIsSuperAdmin(false);
         setAdminRole(null);
         return false;
       }
 
-      const role = data.role;
+      const role = data;
       const isAdminUser = role === 'admin' || role === 'super_admin';
       const isSuperAdminUser = role === 'super_admin';
 
       setIsAdmin(isAdminUser);
       setIsSuperAdmin(isSuperAdminUser);
       setAdminRole(role);
+
+      if (isAdminUser) {
+        refreshAdminSession();
+        await auditLog('ADMIN_LOGIN', 'user_roles', user.id);
+      }
 
       return isAdminUser;
     } catch (error) {
@@ -74,8 +99,8 @@ export const AdminSecurityProvider = ({ children }: { children: ReactNode }) => 
   };
 
   const grantAdminRole = async (userId: string, role: 'admin' | 'super_admin'): Promise<boolean> => {
-    if (!isSuperAdmin) {
-      toast.error('Only super administrators can grant admin roles');
+    if (!isSuperAdmin || !isSessionValid()) {
+      toast.error('Unauthorized: Only super administrators can grant admin roles');
       return false;
     }
 
@@ -94,6 +119,7 @@ export const AdminSecurityProvider = ({ children }: { children: ReactNode }) => 
 
       await auditLog('GRANT_ADMIN_ROLE', 'user_roles', userId, null, { role, granted_by: user?.id });
       toast.success(`Successfully granted ${role} role`);
+      refreshAdminSession();
       return true;
     } catch (error: any) {
       console.error('Error granting admin role:', error);
@@ -103,8 +129,8 @@ export const AdminSecurityProvider = ({ children }: { children: ReactNode }) => 
   };
 
   const revokeAdminRole = async (userId: string): Promise<boolean> => {
-    if (!isSuperAdmin) {
-      toast.error('Only super administrators can revoke admin roles');
+    if (!isSuperAdmin || !isSessionValid()) {
+      toast.error('Unauthorized: Only super administrators can revoke admin roles');
       return false;
     }
 
@@ -118,6 +144,7 @@ export const AdminSecurityProvider = ({ children }: { children: ReactNode }) => 
 
       await auditLog('REVOKE_ADMIN_ROLE', 'user_roles', userId, { is_active: true }, { is_active: false });
       toast.success('Successfully revoked admin role');
+      refreshAdminSession();
       return true;
     } catch (error: any) {
       console.error('Error revoking admin role:', error);
@@ -151,6 +178,20 @@ export const AdminSecurityProvider = ({ children }: { children: ReactNode }) => 
     }
   };
 
+  // Auto-logout on session timeout
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isAdmin && !isSessionValid()) {
+        setIsAdmin(false);
+        setIsSuperAdmin(false);
+        setAdminRole(null);
+        toast.warning('Admin session expired due to inactivity');
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [isAdmin, lastActivity]);
+
   useEffect(() => {
     if (session) {
       checkAdminStatus();
@@ -163,10 +204,14 @@ export const AdminSecurityProvider = ({ children }: { children: ReactNode }) => 
         isAdmin,
         isSuperAdmin,
         adminRole,
+        sessionTimeout,
+        lastActivity,
         checkAdminStatus,
         grantAdminRole,
         revokeAdminRole,
-        auditLog
+        auditLog,
+        refreshAdminSession,
+        isSessionValid
       }}
     >
       {children}

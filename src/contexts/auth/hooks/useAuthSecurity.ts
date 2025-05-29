@@ -2,7 +2,7 @@
 import { toast } from '@/components/ui/sonner';
 import { UserType } from '../types';
 import { verifyUserEmail, resendEmailVerification } from '../services';
-import { enableTwoFactor as enableTwoFactorReal, disableTwoFactor as disableTwoFactorReal } from '../../../services/twoFactorAuthReal';
+import { enableTwoFactor as enableTwoFactorReal, disableTwoFactor as disableTwoFactorReal, verifyTwoFactorLogin } from '../../../services/twoFactorAuthReal';
 
 export function useAuthSecurity(
   user: UserType | null,
@@ -50,11 +50,20 @@ export function useAuthSecurity(
     return false;
   };
 
+  const verifyTwoFactor = async (code: string): Promise<boolean> => {
+    if (!user?.id) {
+      return false;
+    }
+
+    return await verifyTwoFactorLogin(user.id, code);
+  };
+
   const getSessions = (): Array<any> => {
     return user?.sessions || [];
   };
 
   const terminateSession = async (sessionId: string): Promise<void> => {
+    // Implementation for session termination
     await new Promise((resolve) => setTimeout(resolve, 500));
   };
 
@@ -63,6 +72,7 @@ export function useAuthSecurity(
     sendEmailVerification,
     enableTwoFactor,
     disableTwoFactor,
+    verifyTwoFactor,
     getSessions,
     terminateSession
   };

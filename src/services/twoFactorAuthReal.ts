@@ -42,6 +42,16 @@ export const verifyTOTP = (secret: string, token: string): boolean => {
   return false;
 };
 
+// Generate backup codes
+export const generateBackupCodes = (): string[] => {
+  const codes: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    codes.push(code);
+  }
+  return codes;
+};
+
 // Simplified TOTP generation (use proper library in production)
 const generateTOTP = (secret: string, timeStep: number): string => {
   // This is a placeholder - implement proper HMAC-SHA1 TOTP algorithm
@@ -60,7 +70,7 @@ const simpleHash = (str: string): number => {
   return Math.abs(hash);
 };
 
-export const enableTwoFactor = async (userId: string, totpCode: string): Promise<{ success: boolean; secret?: string; qrCodeUrl?: string }> => {
+export const enableTwoFactor = async (userId: string, totpCode: string): Promise<{ success: boolean; secret?: string; qrCodeUrl?: string; backupCodes?: string[] }> => {
   try {
     // Generate new TOTP secret
     const secret = generateTOTPSecret();
@@ -70,6 +80,9 @@ export const enableTwoFactor = async (userId: string, totpCode: string): Promise
       toast.error('Invalid verification code. Please try again.');
       return { success: false };
     }
+
+    // Generate backup codes
+    const backupCodes = generateBackupCodes();
 
     // Store the secret securely in the user's profile
     const { error } = await supabase
@@ -93,7 +106,7 @@ export const enableTwoFactor = async (userId: string, totpCode: string): Promise
     const qrCodeUrl = generateQRCodeURL(secret, userProfile?.email || '');
 
     toast.success('Two-factor authentication enabled successfully');
-    return { success: true, secret, qrCodeUrl };
+    return { success: true, secret, qrCodeUrl, backupCodes };
 
   } catch (error: any) {
     console.error('Error enabling 2FA:', error);

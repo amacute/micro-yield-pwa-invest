@@ -2,7 +2,6 @@
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { signupUser, signInWithGoogleProvider } from '../services';
 
 interface AdditionalSignupData {
   phone?: string;
@@ -15,6 +14,30 @@ export function useAuthSignup(
 ) {
   const navigate = useNavigate();
 
+  const signupUser = async (email: string, password: string, metadata: any) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: metadata
+      }
+    });
+
+    if (error) throw error;
+    return data;
+  };
+
+  const signInWithGoogleProvider = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`
+      }
+    });
+
+    if (error) throw error;
+  };
+
   const signup = async (
     name: string, 
     email: string, 
@@ -23,6 +46,20 @@ export function useAuthSignup(
   ): Promise<void> => {
     try {
       setLoading(true);
+      
+      // Validate password strength
+      if (password.length < 12) {
+        throw new Error('Password must be at least 12 characters long');
+      }
+      
+      const hasUpperCase = /[A-Z]/.test(password);
+      const hasLowerCase = /[a-z]/.test(password);
+      const hasNumbers = /\d/.test(password);
+      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+      
+      if (!hasUpperCase || !hasLowerCase || !hasNumbers || !hasSpecialChar) {
+        throw new Error('Password must contain uppercase, lowercase, numbers, and special characters');
+      }
       
       if (additionalData?.phone) {
         const { data: existingUser } = await supabase

@@ -11,6 +11,7 @@ type UserType = {
   email: string;
   walletBalance: number;
   avatar_url?: string;
+  avatar?: string; // For backwards compatibility
   kycVerified: boolean;
   country?: string;
   currency?: string;
@@ -93,6 +94,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       profileImageUrl: userData?.avatar_url || '',
       passportUrl: userData?.passport_url || '',
       avatar_url: userData?.avatar_url,
+      avatar: userData?.avatar_url, // For backwards compatibility
       sessions: [] // Will be populated separately if needed
     };
   };
@@ -118,7 +120,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session);
         
         if (session?.user) {
-          // Fetch user profile data
+          // Defer profile fetching to avoid blocking auth state updates
           setTimeout(async () => {
             const userData = await fetchUserProfile(session.user.id);
             const transformedUser = transformUser(session.user, userData);

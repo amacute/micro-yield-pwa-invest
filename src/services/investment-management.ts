@@ -35,14 +35,15 @@ export const createInvestment = async (investmentData: any) => {
   return data;
 };
 
-// Deposit management
+// Deposit management - using transactions table instead of user_investments
 export const fetchDeposits = async () => {
   const { data, error } = await supabase
-    .from('user_investments')
+    .from('transactions')
     .select(`
       *,
-      users!inner(name, email)
+      profiles!inner(full_name, email)
     `)
+    .eq('type', 'deposit')
     .order('created_at', { ascending: false });
   
   if (error) {
@@ -59,7 +60,7 @@ export const approveDeposit = async (depositId: string, amount: number, userId: 
   try {
     // Update the deposit status
     const { error: depositError } = await supabase
-      .from('user_investments')
+      .from('transactions')
       .update({ status: 'approved' })
       .eq('id', depositId);
     
@@ -67,7 +68,7 @@ export const approveDeposit = async (depositId: string, amount: number, userId: 
     
     // Get current user balance
     const { data: userData, error: userFetchError } = await supabase
-      .from('users')
+      .from('profiles')
       .select('wallet_balance')
       .eq('id', userId)
       .single();
@@ -77,7 +78,7 @@ export const approveDeposit = async (depositId: string, amount: number, userId: 
     // Update user wallet balance
     const newBalance = (userData?.wallet_balance || 0) + amount;
     const { error: walletError } = await supabase
-      .from('users')
+      .from('profiles')
       .update({ wallet_balance: newBalance })
       .eq('id', userId);
     

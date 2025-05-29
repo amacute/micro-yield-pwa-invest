@@ -2,14 +2,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 
-// P2P Matching functions
+// P2P Matching functions - using transactions table instead of p2p_loans
 export const fetchPendingLoans = async () => {
   const { data, error } = await supabase
-    .from('p2p_loans')
+    .from('transactions')
     .select(`
       *,
-      users!inner(name, email)
+      profiles!inner(full_name, email)
     `)
+    .eq('type', 'loan_request')
     .eq('status', 'pending')
     .order('created_at', { ascending: false });
   
@@ -24,7 +25,7 @@ export const fetchPendingLoans = async () => {
 
 export const fetchAvailableInvestors = async () => {
   const { data, error } = await supabase
-    .from('users')
+    .from('profiles')
     .select('*')
     .gt('wallet_balance', 0)
     .order('wallet_balance', { ascending: false });
@@ -38,20 +39,20 @@ export const fetchAvailableInvestors = async () => {
   return data || [];
 };
 
-// Create P2P match - simplified for P2P payments
+// Create P2P match - using transactions table instead of p2p_payments
 export const createP2PMatch = async (loanId: string, investors: { id: string, amount: number }[]) => {
   try {
-    // Create P2P payments for each investor
+    // Create P2P payments for each investor using transactions table
     const payments = investors.map(investor => ({
-      payer_id: investor.id,
-      payee_id: loanId, // Using loanId as the payee for now
+      user_id: investor.id,
       amount: investor.amount,
-      purpose: 'P2P Investment',
-      status: 'completed'
+      type: 'p2p_investment',
+      status: 'completed',
+      description: `P2P Investment for loan ${loanId}`
     }));
 
     const { data, error } = await supabase
-      .from('p2p_payments')
+      .from('transactions')
       .insert(payments)
       .select();
     
@@ -66,17 +67,17 @@ export const createP2PMatch = async (loanId: string, investors: { id: string, am
   }
 };
 
-// Create P2P payment directly using correct column names
+// Create P2P payment directly using transactions table
 export const createLendingMatch = async (lenderId: string, borrowerId: string, amount: number, purpose?: string) => {
   try {
     const { data, error } = await supabase
-      .from('p2p_payments')
+      .from('transactions')
       .insert({
-        payer_id: lenderId,
-        payee_id: borrowerId,
+        user_id: lenderId,
         amount: amount,
-        purpose: purpose || 'P2P Loan',
-        status: 'completed'
+        type: 'p2p_lending',
+        status: 'completed',
+        description: purpose || 'P2P Loan'
       })
       .select()
       .single();
@@ -95,12 +96,12 @@ export const createLendingMatch = async (lenderId: string, borrowerId: string, a
 // Lending matches management
 export const fetchLendingMatches = async () => {
   const { data, error } = await supabase
-    .from('p2p_payments')
+    .from('transactions')
     .select(`
       *,
-      lender:users!p2p_payments_payer_id_fkey(name, email),
-      borrower:users!p2p_payments_payee_id_fkey(name, email)
+      profiles!inner(full_name, email)
     `)
+    .eq('type', 'p2p_lending')
     .order('created_at', { ascending: false });
   
   if (error) {

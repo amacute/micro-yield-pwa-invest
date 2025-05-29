@@ -180,6 +180,39 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          country: string | null
+          country_code: string | null
+          email: string
+          full_name: string
+          phone_number: string | null
+          registration_date: string | null
+          user_id: number
+          username: string
+        }
+        Insert: {
+          country?: string | null
+          country_code?: string | null
+          email: string
+          full_name: string
+          phone_number?: string | null
+          registration_date?: string | null
+          user_id?: never
+          username: string
+        }
+        Update: {
+          country?: string | null
+          country_code?: string | null
+          email?: string
+          full_name?: string
+          phone_number?: string | null
+          registration_date?: string | null
+          user_id?: never
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

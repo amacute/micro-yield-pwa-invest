@@ -1,11 +1,12 @@
-
 import { User, Session } from '@supabase/supabase-js';
 
 export type UserType = {
   id: string;
-  name: string;
   email: string;
+  name: string | null;
+  profileImageUrl: string | null;
   walletBalance: number;
+  isEmailVerified: boolean;
   avatar_url?: string;
   avatar?: string; // For backwards compatibility
   kycVerified: boolean;
@@ -16,7 +17,6 @@ export type UserType = {
   twoFactorEnabled?: boolean;
   twoFactorSecret?: string; // For TOTP secret storage
   phone?: string;
-  profileImageUrl?: string;
   passportUrl?: string;
   sessions?: Array<{
     id: string;
@@ -37,10 +37,20 @@ export type AuthContextType = {
   loading: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
-  session: Session | null;
+  session: any;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string, additionalData?: AdditionalSignupData) => Promise<void>;
   logout: () => Promise<void>;
+  signup: (
+    name: string,
+    email: string,
+    password: string,
+    options?: {
+      phone?: string;
+      country?: string;
+      referralCode?: string;
+    }
+  ) => Promise<void>;
+  signupError: string | null;
   updateUserProfile?: (updates: Partial<UserType>) => Promise<void>;
   updateUser?: (user: UserType) => Promise<void>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;

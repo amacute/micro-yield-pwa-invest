@@ -1,4 +1,3 @@
-
 import { UserType } from '../types';
 import { useAuthLogin } from './useAuthLogin';
 import { useAuthSignup } from './useAuthSignup';
@@ -14,8 +13,8 @@ export function useAuthActions(
   setLoading: (loading: boolean) => void
 ) {
   const { login } = useAuthLogin(setUser, setSession, setLoading);
-  const { signup, signInWithGoogle } = useAuthSignup(setLoading);
   const { logout } = useAuthLogout(setUser, setSession);
+  const { signup, error: signupError } = useAuthSignup(setUser, setSession, setLoading);
   
   const {
     updateUserProfile,
@@ -35,8 +34,9 @@ export function useAuthActions(
 
   return {
     login,
-    signup,
     logout,
+    signup,
+    signupError,
     updateUserProfile,
     updateUser,
     updatePassword,
@@ -46,7 +46,6 @@ export function useAuthActions(
     enableTwoFactor,
     disableTwoFactor,
     getSessions,
-    terminateSession,
-    signInWithGoogle
+    terminateSession
   };
 }

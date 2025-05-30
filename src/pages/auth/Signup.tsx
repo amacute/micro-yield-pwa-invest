@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader } from '@/components/common/Loader';
 import { allCountries } from '@/data/countries';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export default function Signup() {
   const [searchParams] = useSearchParams();
@@ -21,6 +22,7 @@ export default function Signup() {
     country: 'US',
     referralCode: ''
   });
+  const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   const { signup, signInWithGoogle, isLoading } = useAuth();
 
   // Get referral code from URL params
@@ -31,25 +33,64 @@ export default function Signup() {
     }
   }, [searchParams]);
 
+  const validateForm = () => {
+    const errors: {[key: string]: string} = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Full name is required';
+    }
+    
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+    
+    if (!formData.phone.trim()) {
+      errors.phone = 'Phone number is required';
+    }
+    
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters long';
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+    if (!validateForm()) {
       return;
     }
 
-    const fullPhone = formData.phone ? `${formData.countryCode}${formData.phone}` : undefined;
-    
-    await signup(formData.name, formData.email, formData.password, {
-      phone: fullPhone,
-      country: formData.country,
-      referralCode: formData.referralCode || undefined
-    });
+    try {
+      const fullPhone = formData.phone ? `${formData.countryCode}${formData.phone}` : undefined;
+      
+      await signup(formData.name, formData.email, formData.password, {
+        phone: fullPhone,
+        country: formData.country,
+        referralCode: formData.referralCode || undefined
+      });
+    } catch (error) {
+      // Error is handled by the hook and displayed via toast
+      console.error('Signup error:', error);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   return (
@@ -76,7 +117,11 @@ export default function Signup() {
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 required
+                className={formErrors.name ? 'border-red-500' : ''}
               />
+              {formErrors.name && (
+                <p className="text-sm text-red-500">{formErrors.name}</p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -90,7 +135,11 @@ export default function Signup() {
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 required
+                className={formErrors.email ? 'border-red-500' : ''}
               />
+              {formErrors.email && (
+                <p className="text-sm text-red-500">{formErrors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -125,9 +174,12 @@ export default function Signup() {
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
                   required
-                  className="flex-1"
+                  className={`flex-1 ${formErrors.phone ? 'border-red-500' : ''}`}
                 />
               </div>
+              {formErrors.phone && (
+                <p className="text-sm text-red-500">{formErrors.phone}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -158,7 +210,11 @@ export default function Signup() {
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
                 required
+                className={formErrors.password ? 'border-red-500' : ''}
               />
+              {formErrors.password && (
+                <p className="text-sm text-red-500">{formErrors.password}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -171,7 +227,11 @@ export default function Signup() {
                 value={formData.confirmPassword}
                 onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                 required
+                className={formErrors.confirmPassword ? 'border-red-500' : ''}
               />
+              {formErrors.confirmPassword && (
+                <p className="text-sm text-red-500">{formErrors.confirmPassword}</p>
+              )}
             </div>
 
             {formData.referralCode && (
@@ -223,13 +283,13 @@ export default function Signup() {
             </div>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col">
-          <p className="text-center text-sm text-muted-foreground mt-2">
-            Already have an account?{" "}
-            <Link to="/login" className="text-axiom-primary hover:underline">
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="text-sm text-center">
+            Already have an account?{' '}
+            <Link to="/login" className="text-primary hover:underline">
               Sign in
             </Link>
-          </p>
+          </div>
         </CardFooter>
       </Card>
     </div>

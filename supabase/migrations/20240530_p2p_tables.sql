@@ -1,3 +1,14 @@
+-- Drop existing types if they exist
+DO $$ BEGIN
+    IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'investment_status') THEN
+        DROP TYPE investment_status CASCADE;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transaction_type') THEN
+        DROP TYPE transaction_type CASCADE;
+    END IF;
+END $$;
+
 -- Create enum for investment status
 CREATE TYPE investment_status AS ENUM ('pending', 'active', 'completed', 'defaulted', 'cancelled');
 

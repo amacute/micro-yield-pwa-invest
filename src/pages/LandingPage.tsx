@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, Shield, DollarSign, Users, TrendingUp, CheckCircle, Star } from 'lucide-react';
+import { SupabaseTest } from '@/components/SupabaseTest';
 
 export default function LandingPage() {
   const [stats, setStats] = useState({
@@ -112,6 +112,11 @@ export default function LandingPage() {
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <span>Regulated Platform</span>
                 </div>
+              </div>
+
+              {/* Supabase Connection Test */}
+              <div className="mt-8">
+                <SupabaseTest />
               </div>
             </div>
             

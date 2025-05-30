@@ -4,357 +4,67 @@ import { supabase, type Profile } from '../lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
 import { toast } from '@/components/ui/sonner';
 
-type AuthContextType = {
-  user: (User & Profile) | null;
+interface AuthContextType {
+  user: User | null;
   loading: boolean;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  session: Session | null;
-  error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  updateProfile: (data: Partial<Profile>) => Promise<void>;
-  updateUserProfile?: (updates: Partial<Profile>) => void;
-  updateUser?: (user: (User & Profile) | null) => Promise<void>;
-  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
-  verifyEmail: (token: string) => Promise<boolean>;
-  sendEmailVerification: (email: string) => Promise<void>;
-  updateCurrency: (currency: string, symbol: string) => void;
-  enableTwoFactor: (code: string) => Promise<boolean>;
-  disableTwoFactor: (code: string) => Promise<boolean>;
-  getSessions: () => Array<any>;
-  terminateSession: (sessionId: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-};
+  signOut: () => Promise<void>;
+  updateUserProfile: (updates: { walletBalance?: number; videosWatched?: number }) => Promise<void>;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-type AuthProviderProps = {
-  children: ReactNode;
-};
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<(User & Profile) | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const isAuthenticated = user !== null && session !== null;
 
   useEffect(() => {
-    // Check active sessions and sets the user
-    const session = supabase.auth.getSession();
-    setUser(session?.user || null);
-    setLoading(false);
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          setUser({ ...session.user, ...profile });
-        } catch (error) {
-          console.error('Error fetching user profile:', error);
-        }
-      } else {
-        setUser(null);
-      }
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-
-        setUser({ ...data.user, ...profile });
-        navigate('/');
-      }
-    } catch (error) {
-      setError(error.message);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+  const signOut = async () => {
+    await supabase.auth.signOut();
   };
 
-  const logout = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+  const updateUserProfile = async (updates: { walletBalance?: number; videosWatched?: number }) => {
+    if (!user) return;
 
-      setUser(null);
-      setSession(null);
-      navigate('/login');
-    } catch (error) {
-      setError(error.message);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        wallet_balance: updates.walletBalance,
+        videos_watched_count: updates.videosWatched,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
 
-  const register = async (name: string, email: string, password: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      console.log('Starting registration process...');
-      
-      // Create auth user with metadata
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: name
-          }
-        }
-      });
-
-      if (error) {
-        console.error('Registration error:', error);
-        throw error;
-      }
-
-      console.log('Auth signup successful:', data);
-
-      if (data.user) {
-        // Wait a moment for the trigger to complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Verify profile creation
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-          
-        if (profileError) {
-          console.error('Profile verification error:', profileError);
-        } else {
-          console.log('Profile created successfully:', profile);
-        }
-
-        navigate('/verify-email');
-      }
-    } catch (error) {
-      console.error('Registration process error:', error);
-      setError(error.message);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetPassword = async (email: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) throw error;
-    } catch (error) {
-      setError(error.message);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateUserProfile = async (data: Partial<Profile>) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      if (!user) throw new Error('No user logged in');
-
-      const { data: updatedProfile, error } = await supabase
-        .from('profiles')
-        .update(data)
-        .eq('id', user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setUser(prev => prev ? { ...prev, ...updatedProfile } : null);
-    } catch (error) {
-      setError(error.message);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateUser = async (updatedUser: (User & Profile) | null) => {
-    await updateUserProfile(updatedUser || {});
-  };
-
-  const updatePassword = async (currentPassword: string, newPassword: string) => {
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) throw error;
-      toast.success('Password updated successfully');
-    } catch (error: any) {
-      console.error('Update password error:', error);
-      toast.error(error.message || 'Failed to update password');
-      throw error;
-    }
-  };
-
-  const verifyEmail = async (token: string): Promise<boolean> => {
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        token_hash: token,
-        type: 'email'
-      });
-
-      if (error) throw error;
-      return true;
-    } catch (error: any) {
-      console.error('Email verification error:', error);
-      return false;
-    }
-  };
-
-  const sendEmailVerification = async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email
-      });
-
-      if (error) throw error;
-      toast.success('Verification email sent');
-    } catch (error: any) {
-      console.error('Send verification error:', error);
-      toast.error(error.message || 'Failed to send verification email');
-    }
-  };
-
-  const updateCurrency = (currency: string, symbol: string) => {
-    updateUserProfile({ currency, currencySymbol: symbol });
-  };
-
-  const enableTwoFactor = async (code: string): Promise<boolean> => {
-    // Mock implementation - would integrate with actual 2FA service
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    if (code.length === 6) {
-      await updateUserProfile({ twoFactorEnabled: true });
-      return true;
-    }
-    return false;
-  };
-
-  const disableTwoFactor = async (code: string): Promise<boolean> => {
-    // Mock implementation - would integrate with actual 2FA service
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    if (code.length === 6) {
-      await updateUserProfile({ twoFactorEnabled: false });
-      return true;
-    }
-    return false;
-  };
-
-  const getSessions = () => {
-    return user?.sessions || [];
-  };
-
-  const terminateSession = async (sessionId: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    // Implementation would terminate specific session
-  };
-
-  const signInWithGoogle = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`
-        }
-      });
-
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Google sign in error:', error);
-      toast.error(error.message || 'Google sign in failed');
+    if (error) {
       throw error;
     }
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        isLoading: loading,
-        isAuthenticated,
-        session,
-        error,
-        login,
-        logout,
-        register,
-        resetPassword,
-        updateProfile: updateUserProfile,
-        updateUser,
-        updatePassword,
-        verifyEmail,
-        sendEmailVerification,
-        updateCurrency,
-        enableTwoFactor,
-        disableTwoFactor,
-        getSessions,
-        terminateSession,
-        signInWithGoogle
-      }}
-    >
+    <AuthContext.Provider value={{ user, loading, signOut, updateUserProfile }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}

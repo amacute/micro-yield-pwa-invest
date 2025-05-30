@@ -1,77 +1,42 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { MainLayout } from './components/layout/MainLayout';
-import { Dashboard } from './pages/Dashboard';
-import { Investments } from './pages/Investments';
-import { Wallet } from './pages/Wallet';
-import { Login } from './pages/auth/Login';
-import { Register } from './pages/auth/Register';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Toaster } from '@/components/ui/sonner';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import TikTokTask from '@/pages/TikTokTask';
+import WatchVideos from '@/pages/WatchVideos';
+import P2PLendingDashboard from '@/pages/P2PLendingDashboard';
+import Home from '@/pages/Home';
+import { AuthProvider } from '@/contexts/AuthContext';
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
+// Placeholder components for other routes
+const Wallet = () => <div>Wallet Page</div>;
+const Settings = () => <div>Settings Page</div>;
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-
-  return <>{children}</>;
-};
-
-const App = () => {
+function App() {
   return (
-    <Router>
-      <AuthProvider>
+    <AuthProvider>
+      <Router>
         <Routes>
-          {/* Auth Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-
-          {/* Protected Routes */}
+          <Route path="/" element={<Home />} />
           <Route
-            path="/"
+            path="/dashboard"
             element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Dashboard />
-                </MainLayout>
-              </ProtectedRoute>
+              <DashboardLayout>
+                <Routes>
+                  <Route index element={<Navigate to="/dashboard/p2p" replace />} />
+                  <Route path="tasks/tiktok" element={<TikTokTask />} />
+                  <Route path="watch-videos" element={<WatchVideos />} />
+                  <Route path="p2p" element={<P2PLendingDashboard />} />
+                  <Route path="wallet" element={<Wallet />} />
+                  <Route path="settings" element={<Settings />} />
+                </Routes>
+              </DashboardLayout>
             }
           />
-          <Route
-            path="/investments"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Investments />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/wallet"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Wallet />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-      </AuthProvider>
-    </Router>
+        <Toaster position="top-center" />
+      </Router>
+    </AuthProvider>
   );
-};
+}
 
 export default App;

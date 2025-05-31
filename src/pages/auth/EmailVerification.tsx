@@ -1,123 +1,117 @@
-
 import { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
 import { Loader } from '@/components/common/Loader';
-import { Check, AlertTriangle, MailCheck } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/components/ui/sonner';
 
 export default function EmailVerification() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { verifyEmail, sendEmailVerification, user } = useAuth();
-  
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState<'verifying' | 'success' | 'failed' | 'none'>('none');
-  
-  const token = searchParams.get('token');
-  const email = searchParams.get('email');
-  
+  const [isResending, setIsResending] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { verifyEmail, sendEmailVerification } = useAuth();
+  const email = location.state?.email;
+
   useEffect(() => {
-    const verify = async () => {
+    const verifyToken = async () => {
+      const token = new URLSearchParams(location.search).get('token');
       if (token) {
-        setVerificationStatus('verifying');
         setIsVerifying(true);
-        
         try {
           const success = await verifyEmail(token);
-          setVerificationStatus(success ? 'success' : 'failed');
+          if (success) {
+            toast.success('Email verified successfully!');
+            navigate('/login');
+          } else {
+            toast.error('Email verification failed. Please try again.');
+          }
         } catch (error) {
-          console.error('Error during verification:', error);
-          setVerificationStatus('failed');
+          console.error('Verification error:', error);
+          toast.error('Email verification failed. Please try again.');
         } finally {
           setIsVerifying(false);
         }
       }
     };
-    
-    verify();
-  }, [token, verifyEmail]);
-  
+
+    verifyToken();
+  }, [location, verifyEmail, navigate]);
+
   const handleResendVerification = async () => {
-    if (email) {
+    if (!email) {
+      toast.error('Email address not found. Please try signing up again.');
+      return;
+    }
+
+    setIsResending(true);
+    try {
       await sendEmailVerification(email);
-    } else if (user) {
-      await sendEmailVerification(user.email);
+      toast.success('Verification email sent! Please check your inbox.');
+    } catch (error) {
+      console.error('Error resending verification:', error);
+      toast.error('Failed to resend verification email. Please try again.');
+    } finally {
+      setIsResending(false);
     }
   };
-  
-  const handleGoToDashboard = () => {
-    navigate('/dashboard');
-  };
-  
-  const handleGoToLogin = () => {
-    navigate('/login');
-  };
-  
+
+  if (isVerifying) {
+    return (
+      <div className="container max-w-md mx-auto pt-8">
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <Loader />
+            <p className="mt-4">Verifying your email...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container max-w-md mx-auto pt-8">
       <Card>
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Email Verification</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Verify Your Email</CardTitle>
           <CardDescription className="text-center">
-            {verificationStatus === 'none' && 'Please verify your email address to continue'}
-            {verificationStatus === 'verifying' && 'Verifying your email address...'}
-            {verificationStatus === 'success' && 'Your email has been successfully verified!'}
-            {verificationStatus === 'failed' && 'Email verification failed. The link may have expired.'}
+            We've sent a verification link to your email address
+            {email && <div className="font-medium mt-1">{email}</div>}
           </CardDescription>
         </CardHeader>
-        
-        <CardContent className="flex flex-col items-center justify-center py-8">
-          {verificationStatus === 'none' && (
-            <div className="text-center">
-              <MailCheck className="mx-auto h-16 w-16 text-axiom-primary mb-4" />
-              <p>We've sent a verification email to your inbox. Please click the link in that email to verify your account.</p>
-            </div>
-          )}
+        <CardContent className="space-y-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            Please check your inbox and click the verification link to complete your registration.
+            If you don't see the email, check your spam folder.
+          </p>
           
-          {verificationStatus === 'verifying' && (
-            <Loader size="large" />
-          )}
-          
-          {verificationStatus === 'success' && (
-            <div className="text-center">
-              <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                <Check className="h-8 w-8 text-green-600" />
-              </div>
-              <p>Thank you for verifying your email address. Your account is now fully activated.</p>
-            </div>
-          )}
-          
-          {verificationStatus === 'failed' && (
-            <div className="text-center">
-              <div className="h-16 w-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle className="h-8 w-8 text-red-600" />
-              </div>
-              <p>We couldn't verify your email with this link. It may have expired or been used already.</p>
-            </div>
-          )}
-        </CardContent>
-        
-        <CardFooter className="flex flex-col gap-2">
-          {verificationStatus === 'success' && (
-            <Button className="w-full" onClick={handleGoToDashboard}>
-              Go to Dashboard
+          <div className="space-y-2">
+            <Button
+              onClick={handleResendVerification}
+              variant="outline"
+              disabled={isResending}
+              className="w-full"
+            >
+              {isResending ? (
+                <>
+                  <Loader size="small" className="mr-2" />
+                  Resending...
+                </>
+              ) : (
+                'Resend Verification Email'
+              )}
             </Button>
-          )}
-          
-          {(verificationStatus === 'none' || verificationStatus === 'failed') && (
-            <>
-              <Button variant="outline" className="w-full" onClick={handleResendVerification} disabled={isVerifying}>
-                Resend Verification Email
-              </Button>
-              
-              <Button className="w-full mt-2" onClick={handleGoToLogin}>
-                Back to Login
-              </Button>
-            </>
-          )}
-        </CardFooter>
+            
+            <Button
+              onClick={() => navigate('/login')}
+              variant="ghost"
+              className="w-full"
+            >
+              Back to Login
+            </Button>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

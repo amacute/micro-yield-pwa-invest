@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/sonner';
 import { UserType } from '../types';
 import { signupUser } from '../services';
+import { sendVerificationEmail } from '@/services/emailService';
+import { generateVerificationToken } from '@/utils/auth';
 
 export function useAuthSignup(
   setUser: (user: UserType | null) => void,
@@ -35,30 +37,38 @@ export function useAuthSignup(
         throw new Error('Password must be at least 8 characters long');
       }
 
+      // Generate verification token
+      const verificationToken = generateVerificationToken();
+
       // Format metadata
       const metadata = {
         full_name: name,
         phone_number: options?.phone,
         country: options?.country,
         referral_code: options?.referralCode,
+        verification_token: verificationToken,
+        email_verified: false
       };
 
       // Attempt signup
       const { user, session } = await signupUser(email, password, metadata);
 
       if (user) {
+        // Send verification email
+        await sendVerificationEmail(email, name, verificationToken);
+
         setUser({
           id: user.id,
           email: user.email!,
           name: metadata.full_name,
           profileImageUrl: null,
           walletBalance: 0,
-          isEmailVerified: user.email_confirmed_at ? true : false,
+          isEmailVerified: false,
         });
         setSession(session);
 
         // Show success message
-        toast.success('Account created successfully! Please check your email for verification.');
+        toast.success('Account created! Please check your email for verification.');
         
         // Navigate to email verification page
         navigate('/verify-email', { state: { email } });

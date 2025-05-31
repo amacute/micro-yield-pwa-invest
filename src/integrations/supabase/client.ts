@@ -13,3 +13,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Re-export the configured client from the database config
+export { supabase } from '@/config/database';

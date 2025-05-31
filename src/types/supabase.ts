@@ -68,4 +68,80 @@ export interface RepaymentSchedule {
   status: string
   created_at: string
   updated_at: string
+}
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export interface Database {
+  public: {
+    Tables: {
+      sign_up: {
+        Row: {
+          id: number
+          full_name: string
+          username: string
+          country: string
+          phone_number: string
+          address: string
+          email_address: string
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          full_name: string
+          username: string
+          country: string
+          phone_number: string
+          address: string
+          email_address: string
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          full_name?: string
+          username?: string
+          country?: string
+          phone_number?: string
+          address?: string
+          email_address?: string
+          created_at?: string
+        }
+      }
+      sign_in: {
+        Row: {
+          id: number
+          email: string
+          password: string
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          email: string
+          password: string
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          email?: string
+          password?: string
+          created_at?: string
+        }
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+  }
 } 
